@@ -24,6 +24,19 @@ export default function Layout() {
           },
         }} 
       />
+      <Stack.Screen 
+        name="Screens/EditExistingTaskScreen" 
+        options={{
+          title: 'Edit Task',
+          headerStyle: {
+            backgroundColor: '#93c4af',
+          },
+          headerTintColor: '#0d522c',
+          headerTitleStyle: {
+            fontWeight: 'bold',
+          },
+        }} 
+      />
     </Stack>
   );
 }

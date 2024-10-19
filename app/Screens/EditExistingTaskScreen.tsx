@@ -9,14 +9,16 @@ import {
   KeyboardAvoidingView,
   TouchableOpacity,
   ScrollView,
-} from "react-native";
+} from 'react-native';
 import moment from 'moment';
 import DropDownPicker from 'react-native-dropdown-picker';
 import { WheelPicker } from 'react-native-infinite-wheel-picker';
 import { useRouter } from 'expo-router';
 import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
+import { CheckBox } from 'react-native-elements';
+import { Feather } from '@expo/vector-icons';
 
-const CreateNewTaskScreen = () => {
+const EditExistingTaskScreen = () => {
   const router = useRouter();
 
   const [form, setForm] = useState({
@@ -26,7 +28,8 @@ const CreateNewTaskScreen = () => {
     time: new Date(),
     alertType: '',
     repeatNum: 0,
-    repeatPeriod: ''
+    repeatPeriod: '',
+    completed: false,
   });
 
   const [open, setOpen] = useState(false);
@@ -34,7 +37,7 @@ const CreateNewTaskScreen = () => {
   const [items, setItems] = useState([
     { label: 'None', value: 'none' },
     { label: 'Standard', value: 'standard' },
-    { label: 'Gradual', value: 'gradual' }
+    { label: 'Gradual', value: 'gradual' },
   ]);
 
   const numChoices = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
@@ -44,7 +47,7 @@ const CreateNewTaskScreen = () => {
     let dateFin = moment(form.date).format('YYYY-MM-DD');
     let timeFin = moment(form.time).format('HH:mm:ss');
     setForm({ ...form, alertType: alertTyp });
-    
+
     console.log('Title: ', form.title);
     console.log('Category: ', form.category);
     console.log('Date: ', dateFin);
@@ -52,8 +55,8 @@ const CreateNewTaskScreen = () => {
     console.log('Repeat Number: ', form.repeatNum);
     console.log('Repeat Period: ', form.repeatPeriod);
     console.log('Alert Type: ', form.alertType);
+    console.log('Completed: ', form.completed);
 
-    // Navigate back to the home screen after submitting
     router.back();
   };
 
@@ -67,23 +70,39 @@ const CreateNewTaskScreen = () => {
     setForm({ ...form, time: currentTime });
   };
 
+  const toggleCompletion = () => {
+    setForm((prevForm) => ({ ...prevForm, completed: !prevForm.completed }));
+  };
+
+  const handleDelete = () => {
+    console.log('Task deleted.');
+    router.back();
+  };
+
   return (
-    <KeyboardAvoidingView 
+    <KeyboardAvoidingView
       style={styles.container}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
       <SafeAreaView style={styles.safeArea}>
         <ScrollView contentContainerStyle={styles.scrollViewContent}>
+          <CheckBox
+            title="Mark as Complete"
+            checked={form.completed}
+            onPress={toggleCompletion}
+            containerStyle={styles.checkBoxContainer}
+            textStyle={styles.switchLabel}
+          />
           <TextInput
             style={styles.inputBox}
-            placeholder='Title'
+            placeholder="Title"
             placeholderTextColor="#6b917f"
             onChangeText={(val) => setForm({ ...form, title: val })}
           />
 
           <TextInput
             style={styles.inputBox}
-            placeholder='Category'
+            placeholder="Category"
             placeholderTextColor="#6b917f"
             onChangeText={(val) => setForm({ ...form, category: val })}
           />
@@ -91,8 +110,8 @@ const CreateNewTaskScreen = () => {
           <View style={styles.dateTimeBox}>
             <Text style={styles.labelText}>Date</Text>
             <DateTimePicker
-              mode='date'
-              display='default'
+              mode="date"
+              display="default"
               value={form.date}
               onChange={handleDateChange}
               style={styles.dateTimePicker}
@@ -102,8 +121,8 @@ const CreateNewTaskScreen = () => {
           <View style={styles.dateTimeBox}>
             <Text style={styles.labelText}>Time</Text>
             <DateTimePicker
-              mode='time'
-              display='default'
+              mode="time"
+              display="default"
               value={form.time}
               onChange={handleTimeChange}
               style={styles.dateTimePicker}
@@ -145,26 +164,26 @@ const CreateNewTaskScreen = () => {
               dropDownContainerStyle={styles.dropdownList}
               textStyle={styles.dropdownText}
               placeholderStyle={styles.dropdownPlaceholder}
+              zIndex={10}
             />
           </View>
 
+          <TouchableOpacity style={styles.deleteButton} onPress={handleDelete}>
+            <Feather name="trash-2" size={24} color="#fff" />
+          </TouchableOpacity>
+
           <TouchableOpacity style={styles.submitButton} onPress={handleSubmit}>
-            <Text style={styles.submitButtonText}>Create Task</Text>
+            <Text style={styles.submitButtonText}>Edit Task</Text>
           </TouchableOpacity>
         </ScrollView>
       </SafeAreaView>
     </KeyboardAvoidingView>
   );
-}
+};
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#caddd7',
-  },
-  safeArea: {
-    flex: 1,
-  },
+  container: { flex: 1, backgroundColor: '#caddd7' },
+  safeArea: { flex: 1 },
   scrollViewContent: {
     flexGrow: 1,
     justifyContent: 'center',
@@ -193,14 +212,8 @@ const styles = StyleSheet.create({
     width: '90%',
     marginBottom: 15,
   },
-  labelText: {
-    fontSize: 16,
-    color: '#6b917f',
-    marginRight: 10,
-  },
-  dateTimePicker: {
-    flex: 1,
-  },
+  labelText: { fontSize: 16, color: '#6b917f', marginRight: 10 },
+  dateTimePicker: { flex: 1 },
   repeatContainer: {
     backgroundColor: '#fcfcfc',
     borderRadius: 10,
@@ -208,24 +221,16 @@ const styles = StyleSheet.create({
     padding: 15,
     marginBottom: 15,
   },
-  repeatLabel: {
-    fontSize: 16,
-    color: '#6b917f',
-    marginBottom: 10,
-  },
-  repeatBox: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-  },
-  wheelPicker: {
-    flex: 1,
-    height: 150,
-  },
+  repeatLabel: { fontSize: 16, color: '#6b917f', marginBottom: 10 },
+  repeatBox: { flexDirection: 'row', justifyContent: 'space-around' },
+  switchLabel: { fontSize: 16, color: '#6b917f' },
   dropdownContainer: {
     width: '90%',
     alignItems: 'center',
     marginBottom: 15,
   },
+  checkBoxContainer: { width: '90%', backgroundColor: 'transparent', borderWidth: 0 },
+  
   dropdownPicker: {
     backgroundColor: '#fcfcfc',
     borderRadius: 10,
@@ -244,6 +249,19 @@ const styles = StyleSheet.create({
   dropdownPlaceholder: {
     color: '#6b917f',
   },
+  wheelPicker: {
+    flex: 1,
+    height: 150,
+  },
+  deleteButton: {
+    backgroundColor: '#ff4d4d',
+    borderRadius: 50,
+    width: 50,
+    height: 50,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginVertical: 15,
+  },
   submitButton: {
     backgroundColor: '#77bba2',
     padding: 15,
@@ -258,4 +276,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default CreateNewTaskScreen;
+export default EditExistingTaskScreen;
