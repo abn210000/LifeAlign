@@ -1,6 +1,6 @@
 // context/TaskContext.tsx
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { Task } from '../types/Task';
+import { Task } from '../types/Tasks';
 import { TaskService } from '../services/TaskService';
 
 interface TaskContextType {

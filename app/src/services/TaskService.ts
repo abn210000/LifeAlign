@@ -1,6 +1,6 @@
 // services/TaskService.ts
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { Task } from '../types/Task';
+import { Task } from '../types/Tasks';
 
 const TASKS_STORAGE_KEY = '@life_align_tasks';
 
@@ -24,6 +24,8 @@ export class TaskService {
       return [];
     }
   }
+
+  
 
   static async addTask(task: Omit<Task, 'id'>): Promise<Task> {
     try {

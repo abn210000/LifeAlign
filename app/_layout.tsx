@@ -34,6 +34,19 @@ function Layout() {
         }} 
       />
       <Stack.Screen 
+        name="Screens/EditTaskList" 
+        options={{
+          title: 'Current Task List',
+          headerStyle: {
+            backgroundColor: '#93c4af',
+          },
+          headerTintColor: '#0d522c',
+          headerTitleStyle: {
+            fontWeight: 'bold',
+          },
+        }} 
+      />
+      <Stack.Screen 
         name="Screens/EditExistingTaskScreen" 
         options={{
           title: 'Edit Task',

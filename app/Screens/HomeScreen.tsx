@@ -6,7 +6,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Feather, AntDesign, Ionicons } from '@expo/vector-icons';
 import { useTaskContext } from '../src/context/TaskContext';
-import { Task } from '../src/types/Task';
+import { Task } from '../src/types/Tasks';
 
 
 export default function HomeScreen() {
@@ -28,7 +28,7 @@ export default function HomeScreen() {
     <TouchableOpacity 
       style={styles.taskItem}
       onPress={() => router.push({
-        pathname: '/Screens/EditExistingTaskScreen',
+        pathname: '/Screens/EditTaskList',
         params: { taskId: task.id }
       })}
     >
@@ -108,7 +108,7 @@ export default function HomeScreen() {
       <View style={styles.buttonContainer}>
         <TouchableOpacity 
           style={[styles.button, styles.editButton]} 
-          onPress={() => router.push('/Screens/EditExistingTaskScreen')}
+          onPress={() => router.push('/Screens/EditTaskList')}
         >
           <Feather name="edit-2" size={24} color="#ffffff" />
         </TouchableOpacity>
