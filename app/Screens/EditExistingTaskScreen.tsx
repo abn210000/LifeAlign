@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   StyleSheet,
   Text,
@@ -9,6 +9,7 @@ import {
   KeyboardAvoidingView,
   TouchableOpacity,
   ScrollView,
+  ActivityIndicator,
 } from 'react-native';
 import moment from 'moment';
 import DropDownPicker from 'react-native-dropdown-picker';
@@ -17,11 +18,13 @@ import { useRouter } from 'expo-router';
 import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
 import { CheckBox } from 'react-native-elements';
 import { Feather } from '@expo/vector-icons';
-import { useLocalSearchParams } from 'expo-router';  // For getting route params
-import { useTaskContext } from '../src/context/TaskContext';  // This is the custom hook we created
+import { useLocalSearchParams } from 'expo-router';
+import { useTaskContext } from '../src/context/TaskContext';
+import { TaskService } from '../src/services/TaskService';
 
 const EditExistingTaskScreen = () => {
   const router = useRouter();
+  const [isLoading, setIsLoading] = useState(true);
 
   const [form, setForm] = useState({
     title: '',
@@ -50,7 +53,41 @@ const EditExistingTaskScreen = () => {
 
   // Ensure taskId is treated as a string
   const stringTaskId = Array.isArray(taskId) ? taskId[0] : taskId;
-  
+
+  // Load existing task data
+  useEffect(() => {
+    const loadTask = async () => {
+      try {
+        const task = await TaskService.getTask(stringTaskId);
+        if (task) {
+          // Parse the date and time strings into Date objects
+          const taskDate = new Date(task.date);
+          const [hours, minutes] = task.time.split(':').map(Number);
+          const taskTime = new Date();
+          taskTime.setHours(hours, minutes);
+
+          setForm({
+            title: task.title,
+            category: task.category || '',
+            date: taskDate,
+            time: taskTime,
+            alertType: task.alertType || '',
+            repeatNum: task.repeatNum || 0,
+            repeatPeriod: task.repeatPeriod || '',
+            completed: task.completed || false,
+          });
+          setAlertTyp(task.alertType || '');
+        }
+      } catch (error) {
+        console.error('Error loading task:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadTask();
+  }, [stringTaskId]);
+
   const handleSubmit = async () => {
     const updates = {
       title: form.title,
@@ -86,6 +123,13 @@ const EditExistingTaskScreen = () => {
     setForm((prevForm) => ({ ...prevForm, completed: !prevForm.completed }));
   };
 
+  if (isLoading) {
+    return (
+      <View style={[styles.container, styles.centered]}>
+        <ActivityIndicator size="large" color="#0d522c" />
+      </View>
+    );
+  }
 
   return (
     <KeyboardAvoidingView
@@ -93,7 +137,7 @@ const EditExistingTaskScreen = () => {
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
       <SafeAreaView style={styles.safeArea}>
-        <ScrollView contentContainerStyle={styles.scrollViewContent}>
+        <View style={styles.contentContainer}>
           <CheckBox
             title="Mark as Complete"
             checked={form.completed}
@@ -105,6 +149,7 @@ const EditExistingTaskScreen = () => {
             style={styles.inputBox}
             placeholder="Title"
             placeholderTextColor="#6b917f"
+            value={form.title}
             onChangeText={(val) => setForm({ ...form, title: val })}
           />
 
@@ -112,6 +157,7 @@ const EditExistingTaskScreen = () => {
             style={styles.inputBox}
             placeholder="Category"
             placeholderTextColor="#6b917f"
+            value={form.category}
             onChangeText={(val) => setForm({ ...form, category: val })}
           />
 
@@ -150,7 +196,7 @@ const EditExistingTaskScreen = () => {
               />
               <WheelPicker
                 data={periods}
-                selectedIndex={0}
+                selectedIndex={periods.indexOf(form.repeatPeriod)}
                 onChangeValue={(val) => setForm({ ...form, repeatPeriod: periods[val] })}
                 infiniteScroll={false}
                 containerStyle={styles.wheelPicker}
@@ -159,7 +205,7 @@ const EditExistingTaskScreen = () => {
             </View>
           </View>
 
-          <View style={styles.dropdownContainer}>
+          <View style={[styles.dropdownContainer, { zIndex: 1000 }]}>
             <DropDownPicker
               open={open}
               value={alertTyp}
@@ -172,18 +218,18 @@ const EditExistingTaskScreen = () => {
               dropDownContainerStyle={styles.dropdownList}
               textStyle={styles.dropdownText}
               placeholderStyle={styles.dropdownPlaceholder}
-              zIndex={10}
+              zIndex={1000}
             />
           </View>
 
           <TouchableOpacity style={styles.deleteButton} onPress={handleDelete}>
             <Feather name="trash-2" size={24} color="#fff" />
           </TouchableOpacity>
-
+          
           <TouchableOpacity style={styles.submitButton} onPress={handleSubmit}>
-            <Text style={styles.submitButtonText}>Edit Task</Text>
+            <Text style={styles.submitButtonText}>Save Changes</Text>
           </TouchableOpacity>
-        </ScrollView>
+        </View>
       </SafeAreaView>
     </KeyboardAvoidingView>
   );
@@ -197,6 +243,11 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     paddingVertical: 20,
+  },
+  centered: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   inputBox: {
     backgroundColor: '#fcfcfc',
@@ -281,6 +332,12 @@ const styles = StyleSheet.create({
     color: '#0d522c',
     fontSize: 18,
     fontWeight: 'bold',
+  },
+  contentContainer: {
+    flexGrow: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: 20,
   },
 });
 

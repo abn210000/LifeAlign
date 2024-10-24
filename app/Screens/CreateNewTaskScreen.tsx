@@ -16,19 +16,23 @@ import { WheelPicker } from 'react-native-infinite-wheel-picker';
 import { useRouter } from 'expo-router';
 import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
 import { useTaskContext } from '../src/context/TaskContext';  // This is the custom hook we created
+import { categories, getCategoryColor } from '../src/config/categories';
 
 const CreateNewTaskScreen = () => {
   const router = useRouter();
 
-  const [form, setForm] = useState({
-    title: '',
-    category: '',
-    date: new Date(),
-    time: new Date(),
-    alertType: '',
-    repeatNum: 0,
-    repeatPeriod: ''
-  });
+    const [form, setForm] = useState({
+      title: '',
+      category: '',
+      date: new Date(),
+      time: new Date(),
+      alertType: '',
+      repeatNum: 0,
+      repeatPeriod: ''
+    });
+  
+    const [categoryOpen, setCategoryOpen] = useState(false);
+    const [categoryItems] = useState(categories);
 
   const [open, setOpen] = useState(false);
   const [alertTyp, setAlertTyp] = useState('');
@@ -75,7 +79,7 @@ const CreateNewTaskScreen = () => {
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
       <SafeAreaView style={styles.safeArea}>
-        <ScrollView contentContainerStyle={styles.scrollViewContent}>
+        <View style={styles.contentContainer}>
           <TextInput
             style={styles.inputBox}
             placeholder='Title'
@@ -134,7 +138,8 @@ const CreateNewTaskScreen = () => {
             </View>
           </View>
 
-          <View style={styles.dropdownContainer}>
+          {/* Move DropDownPicker outside of ScrollView */}
+          <View style={[styles.dropdownContainer, { zIndex: 1000 }]}>
             <DropDownPicker
               open={open}
               value={alertTyp}
@@ -147,13 +152,14 @@ const CreateNewTaskScreen = () => {
               dropDownContainerStyle={styles.dropdownList}
               textStyle={styles.dropdownText}
               placeholderStyle={styles.dropdownPlaceholder}
+              zIndex={1000}
             />
           </View>
 
           <TouchableOpacity style={styles.submitButton} onPress={handleSubmit}>
             <Text style={styles.submitButtonText}>Create Task</Text>
           </TouchableOpacity>
-        </ScrollView>
+        </View>
       </SafeAreaView>
     </KeyboardAvoidingView>
   );
@@ -258,6 +264,34 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: 'bold',
   },
+  contentContainer: {
+    flexGrow: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: 20,
+  },
+  categoryItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 15,
+    borderBottomWidth: 1,
+    borderBottomColor: '#eee',
+  },
+  categoryDot: {
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+    marginRight: 10,
+  },
+  categoryText: {
+    fontSize: 16,
+    color: '#0d522c',
+  },
+  dropdownLabel: {
+    fontSize: 16,
+    color: '#0d522c',
+  },
+
 });
 
 export default CreateNewTaskScreen;

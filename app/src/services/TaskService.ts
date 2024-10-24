@@ -25,7 +25,16 @@ export class TaskService {
     }
   }
 
-  
+  static async getTask(taskId: string): Promise<Task | null> {
+    try {
+      const tasks = await this.getAllTasks();
+      const task = tasks.find(task => task.id === taskId);
+      return task || null;
+    } catch (error) {
+      console.error('Error getting task:', error);
+      return null;
+    }
+  }
 
   static async addTask(task: Omit<Task, 'id'>): Promise<Task> {
     try {
