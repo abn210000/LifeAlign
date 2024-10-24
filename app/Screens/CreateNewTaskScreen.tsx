@@ -15,6 +15,7 @@ import DropDownPicker from 'react-native-dropdown-picker';
 import { WheelPicker } from 'react-native-infinite-wheel-picker';
 import { useRouter } from 'expo-router';
 import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
+import { useTaskContext } from '../src/context/TaskContext';  // This is the custom hook we created
 
 const CreateNewTaskScreen = () => {
   const router = useRouter();
@@ -40,20 +41,21 @@ const CreateNewTaskScreen = () => {
   const numChoices = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
   const periods = ['-', 'Days', 'Weeks', 'Months', 'Years'];
 
-  const handleSubmit = () => {
-    let dateFin = moment(form.date).format('YYYY-MM-DD');
-    let timeFin = moment(form.time).format('HH:mm:ss');
-    setForm({ ...form, alertType: alertTyp });
-    
-    console.log('Title: ', form.title);
-    console.log('Category: ', form.category);
-    console.log('Date: ', dateFin);
-    console.log('Time: ', timeFin);
-    console.log('Repeat Number: ', form.repeatNum);
-    console.log('Repeat Period: ', form.repeatPeriod);
-    console.log('Alert Type: ', form.alertType);
+  const { addTask } = useTaskContext();
 
-    // Navigate back to the home screen after submitting
+  const handleSubmit = async () => {
+    const newTask = {
+      title: form.title,
+      category: form.category,
+      date: moment(form.date).format('YYYY-MM-DD'),
+      time: moment(form.time).format('HH:mm'),
+      alertType: alertTyp,
+      repeatNum: form.repeatNum,
+      repeatPeriod: form.repeatPeriod,
+      completed: false
+    };
+
+    await addTask(newTask);
     router.back();
   };
 

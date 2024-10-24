@@ -1,7 +1,16 @@
 import React from 'react';
+import { TaskProvider } from './src/context/TaskContext'; // Assuming your context is defined here
 import { Stack } from 'expo-router';
 
-export default function Layout() {
+export default function App() {
+  return (
+    <TaskProvider>
+      <Layout />
+    </TaskProvider>
+  );
+}
+
+function Layout() {
   return (
     <Stack>
       <Stack.Screen 
