@@ -22,10 +22,12 @@ import { useLocalSearchParams } from 'expo-router';
 import { useTaskContext } from '../src/context/TaskContext';
 import { TaskService } from '../src/services/TaskService';
 
+// Screen for editing an existing task
 const EditExistingTaskScreen = () => {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(true);
 
+  //  Form state for storing task data
   const [form, setForm] = useState({
     title: '',
     category: '',
@@ -37,6 +39,7 @@ const EditExistingTaskScreen = () => {
     completed: false,
   });
 
+  // State for dropdown and picker elements
   const [open, setOpen] = useState(false);
   const [alertTyp, setAlertTyp] = useState('');
   const [items, setItems] = useState([
@@ -45,11 +48,11 @@ const EditExistingTaskScreen = () => {
     { label: 'Gradual', value: 'gradual' },
   ]);
 
-  const numChoices = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
-  const periods = ['-', 'Days', 'Weeks', 'Months', 'Years'];
+  const numChoices = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10];  // Repeat frequency choices
+  const periods = ['-', 'Days', 'Weeks', 'Months', 'Years'];  // Repeat period choices
 
-  const { updateTask, deleteTask } = useTaskContext();
-  const { taskId } = useLocalSearchParams();
+  const { updateTask, deleteTask } = useTaskContext();  // Accessing context to update and delete a task
+  const { taskId } = useLocalSearchParams();  // Get the taskId from the URL
 
   // Ensure taskId is treated as a string
   const stringTaskId = Array.isArray(taskId) ? taskId[0] : taskId;
@@ -66,6 +69,7 @@ const EditExistingTaskScreen = () => {
           const taskTime = new Date();
           taskTime.setHours(hours, minutes);
 
+          // Set the form state with the task data
           setForm({
             title: task.title,
             category: task.category || '',
@@ -88,6 +92,7 @@ const EditExistingTaskScreen = () => {
     loadTask();
   }, [stringTaskId]);
 
+  // Handle form submission
   const handleSubmit = async () => {
     const updates = {
       title: form.title,
@@ -100,25 +105,30 @@ const EditExistingTaskScreen = () => {
       completed: form.completed
     };
 
+    // Update the task with the new data and navigate back
     await updateTask(stringTaskId, updates);
     router.back();
   };
 
+  // Handle task deletion
   const handleDelete = async () => {
     await deleteTask(stringTaskId);
     router.back();
   };
 
+  //  Handle date change from DateTimePicker
   const handleDateChange = (event: DateTimePickerEvent, selectedDate?: Date) => {
     const currentDate = selectedDate || form.date;
     setForm({ ...form, date: currentDate });
   };
 
+  // Handle time change from DateTimePicker
   const handleTimeChange = (event: DateTimePickerEvent, selectedTime?: Date) => {
     const currentTime = selectedTime || form.time;
     setForm({ ...form, time: currentTime });
   };
 
+  // Toggle task completion status
   const toggleCompletion = () => {
     setForm((prevForm) => ({ ...prevForm, completed: !prevForm.completed }));
   };
@@ -131,6 +141,7 @@ const EditExistingTaskScreen = () => {
     );
   }
 
+  // Render the component
   return (
     <KeyboardAvoidingView
       style={styles.container}
@@ -235,6 +246,7 @@ const EditExistingTaskScreen = () => {
   );
 };
 
+// Styles
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#caddd7' },
   safeArea: { flex: 1 },

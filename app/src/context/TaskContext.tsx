@@ -3,6 +3,7 @@ import React, { createContext, useContext, useState, useEffect, ReactNode } from
 import { Task } from '../types/Tasks';
 import { TaskService } from '../services/TaskService';
 
+// Task context type
 interface TaskContextType {
   tasks: Task[];
   selectedDate: string;
@@ -15,14 +16,17 @@ interface TaskContextType {
   markedDates: { [date: string]: { marked: boolean; selected?: boolean } };
 }
 
+//  Create task context
 const TaskContext = createContext<TaskContextType | undefined>(undefined);
 
+// Task provider component
 export const TaskProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [selectedDate, setSelectedDate] = useState(new Date().toLocaleDateString('en-CA'));
   const [isLoading, setIsLoading] = useState(true);
   const [markedDates, setMarkedDates] = useState<{ [date: string]: { marked: boolean } }>({});
 
+  // Refresh tasks
   const refreshTasks = async () => {
     try {
       setIsLoading(true);
@@ -37,25 +41,30 @@ export const TaskProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   };
 
+  //  Load tasks on initial render
   useEffect(() => {
     refreshTasks();
   }, [selectedDate]);
 
+  // Add a new task
   const addTask = async (task: Omit<Task, 'id'>) => {
     await TaskService.addTask(task);
     await refreshTasks();
   };
 
+  // Update a task
   const updateTask = async (taskId: string, updates: Partial<Task>) => {
     await TaskService.updateTask(taskId, updates);
     await refreshTasks();
   };
 
+  // Delete a task
   const deleteTask = async (taskId: string) => {
     await TaskService.deleteTask(taskId);
     await refreshTasks();
   };
 
+  //  Return provider with context value
   return (
     <TaskContext.Provider
       value={{
@@ -75,6 +84,7 @@ export const TaskProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   );
 };
 
+//  Custom hook to use task context
 export const useTaskContext = () => {
   const context = useContext(TaskContext);
   if (!context) {

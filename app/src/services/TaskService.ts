@@ -4,6 +4,7 @@ import { Task } from '../types/Tasks';
 
 const TASKS_STORAGE_KEY = '@life_align_tasks';
 
+// Task service class
 export class TaskService {
   static async getAllTasks(): Promise<Task[]> {
     try {
@@ -15,6 +16,7 @@ export class TaskService {
     }
   }
 
+  // Get tasks by date
   static async getTasksByDate(date: string): Promise<Task[]> {
     try {
       const tasks = await this.getAllTasks();
@@ -25,6 +27,7 @@ export class TaskService {
     }
   }
 
+  // Get a single task by ID
   static async getTask(taskId: string): Promise<Task | null> {
     try {
       const tasks = await this.getAllTasks();
@@ -36,6 +39,7 @@ export class TaskService {
     }
   }
 
+  // Add a new task
   static async addTask(task: Omit<Task, 'id'>): Promise<Task> {
     try {
       const tasks = await this.getAllTasks();
@@ -52,6 +56,7 @@ export class TaskService {
     }
   }
 
+  // Update a task
   static async updateTask(taskId: string, updates: Partial<Task>): Promise<Task> {
     try {
       const tasks = await this.getAllTasks();
@@ -71,6 +76,7 @@ export class TaskService {
     }
   }
 
+  // Delete a task
   static async deleteTask(taskId: string): Promise<void> {
     try {
       const tasks = await this.getAllTasks();
@@ -82,6 +88,7 @@ export class TaskService {
     }
   }
 
+  //  Get dates with tasks
   static async getDatesWithTasks(): Promise<{ [date: string]: { marked: boolean } }> {
     try {
       const tasks = await this.getAllTasks();

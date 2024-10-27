@@ -8,6 +8,7 @@ export default function TaskListScreen() {
   const router = useRouter();
   const { tasks } = useTaskContext();
 
+  // Render each task item
   const renderTaskItem = ({ item }: { item: Task }) => (
     <TouchableOpacity
       style={styles.taskItem}
@@ -16,11 +17,12 @@ export default function TaskListScreen() {
         params: { taskId: item.id }
       })}
     >
-      <Text style={styles.taskTitle}>{item.title}</Text>
-      <Text style={styles.taskDate}>{item.date}</Text>
+      <Text style={styles.taskTitle}>{item.title}</Text>  // Display task title
+      <Text style={styles.taskDate}>{item.date}</Text>  // Display task date
     </TouchableOpacity>
   );
 
+  // Render the task list screen
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Select Task To Edit</Text>
@@ -34,6 +36,7 @@ export default function TaskListScreen() {
   );
 }
 
+// Styles
 const styles = StyleSheet.create({
   container: {
     flex: 1,

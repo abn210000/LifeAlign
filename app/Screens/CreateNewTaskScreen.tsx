@@ -19,8 +19,9 @@ import { useTaskContext } from '../src/context/TaskContext';  // This is the cus
 import { categories, getCategoryColor } from '../src/config/categories';
 
 const CreateNewTaskScreen = () => {
-  const router = useRouter();
+  const router = useRouter(); // Router for navigation
 
+    // State for storing form data
     const [form, setForm] = useState({
       title: '',
       category: '',
@@ -31,22 +32,24 @@ const CreateNewTaskScreen = () => {
       repeatPeriod: ''
     });
   
-    const [categoryOpen, setCategoryOpen] = useState(false);
-    const [categoryItems] = useState(categories);
+    const [categoryOpen, setCategoryOpen] = useState(false);  // Dropdown state for categories
+    const [categoryItems] = useState(categories); // List of category items
 
+  // State for dropdown and picker elements
   const [open, setOpen] = useState(false);
-  const [alertTyp, setAlertTyp] = useState('');
+  const [alertTyp, setAlertTyp] = useState(''); // State for alert type selection
   const [items, setItems] = useState([
     { label: 'None', value: 'none' },
     { label: 'Standard', value: 'standard' },
     { label: 'Gradual', value: 'gradual' }
   ]);
 
-  const numChoices = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
-  const periods = ['-', 'Days', 'Weeks', 'Months', 'Years'];
+  const numChoices = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10];  // Repeat frequency choices
+  const periods = ['-', 'Days', 'Weeks', 'Months', 'Years'];  // Repeat period choices
 
-  const { addTask } = useTaskContext();
+  const { addTask } = useTaskContext();  // Accessing context to add a new task
 
+  // Handle form submission
   const handleSubmit = async () => {
     const newTask = {
       title: form.title,
@@ -59,20 +62,24 @@ const CreateNewTaskScreen = () => {
       completed: false
     };
 
+    // Add new task to context and navigate back
     await addTask(newTask);
     router.back();
   };
 
+  // Handle date change from DateTimePicker
   const handleDateChange = (event: DateTimePickerEvent, selectedDate?: Date) => {
     const currentDate = selectedDate || form.date;
     setForm({ ...form, date: currentDate });
   };
 
+  // Handle time change from DateTimePicker
   const handleTimeChange = (event: DateTimePickerEvent, selectedTime?: Date) => {
     const currentTime = selectedTime || form.time;
     setForm({ ...form, time: currentTime });
   };
 
+  // Render the component
   return (
     <KeyboardAvoidingView 
       style={styles.container}
@@ -165,6 +172,7 @@ const CreateNewTaskScreen = () => {
   );
 }
 
+// Styles definition for each component
 const styles = StyleSheet.create({
   container: {
     flex: 1,

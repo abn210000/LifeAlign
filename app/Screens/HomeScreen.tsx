@@ -8,7 +8,7 @@ import { Feather, AntDesign, Ionicons } from '@expo/vector-icons';
 import { useTaskContext } from '../src/context/TaskContext';
 import { Task } from '../src/types/Tasks';
 
-
+// Home screen component
 export default function HomeScreen() {
   const router = useRouter();
   const {
@@ -20,10 +20,12 @@ export default function HomeScreen() {
     markedDates
   } = useTaskContext();
 
+  // Handle day press on calendar
   const handleDayPress = (day: { dateString: string }) => {
     setSelectedDate(day.dateString);
   };
 
+  // Task item component
   const TaskItem = ({ task }: { task: Task }) => (
     <TouchableOpacity 
       style={styles.taskItem}
@@ -51,6 +53,7 @@ export default function HomeScreen() {
     </TouchableOpacity>
   );
 
+  // Render the component
   return (
     <SafeAreaView style={styles.container}>
       <Text style={styles.title}>Life Align</Text>
@@ -131,6 +134,7 @@ export default function HomeScreen() {
   );
 }
 
+// Styles definition for each component
 const styles = StyleSheet.create({
   container: {
     flex: 1,
