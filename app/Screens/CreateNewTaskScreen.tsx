@@ -8,48 +8,44 @@ import {
   Platform,
   KeyboardAvoidingView,
   TouchableOpacity,
-  ScrollView,
 } from "react-native";
 import moment from 'moment';
 import DropDownPicker from 'react-native-dropdown-picker';
 import { WheelPicker } from 'react-native-infinite-wheel-picker';
 import { useRouter } from 'expo-router';
 import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
-import { useTaskContext } from '../src/context/TaskContext';  // This is the custom hook we created
+import { useTaskContext } from '../src/context/TaskContext';
 import { categories, getCategoryColor } from '../src/config/categories';
 
 const CreateNewTaskScreen = () => {
-  const router = useRouter(); // Router for navigation
+  const router = useRouter();
 
-    // State for storing form data
-    const [form, setForm] = useState({
-      title: '',
-      category: '',
-      date: new Date(),
-      time: new Date(),
-      alertType: '',
-      repeatNum: 0,
-      repeatPeriod: ''
-    });
-  
-    const [categoryOpen, setCategoryOpen] = useState(false);  // Dropdown state for categories
-    const [categoryItems] = useState(categories); // List of category items
+  const [form, setForm] = useState({
+    title: '',
+    category: '',
+    date: new Date(),
+    time: new Date(),
+    alertType: '',
+    repeatNum: 0,
+    repeatPeriod: ''
+  });
 
-  // State for dropdown and picker elements
+  const [categoryOpen, setCategoryOpen] = useState(false);
+  const [categoryItems] = useState(categories);
+
   const [open, setOpen] = useState(false);
-  const [alertTyp, setAlertTyp] = useState(''); // State for alert type selection
+  const [alertTyp, setAlertTyp] = useState('');
   const [items, setItems] = useState([
     { label: 'None', value: 'none' },
     { label: 'Standard', value: 'standard' },
     { label: 'Gradual', value: 'gradual' }
   ]);
 
-  const numChoices = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10];  // Repeat frequency choices
-  const periods = ['-', 'Days', 'Weeks', 'Months', 'Years'];  // Repeat period choices
+  const numChoices = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
+  const periods = ['-', 'Days', 'Weeks', 'Months', 'Years'];
 
-  const { addTask } = useTaskContext();  // Accessing context to add a new task
+  const { addTask } = useTaskContext();
 
-  // Handle form submission
   const handleSubmit = async () => {
     const newTask = {
       title: form.title,
@@ -62,24 +58,20 @@ const CreateNewTaskScreen = () => {
       completed: false
     };
 
-    // Add new task to context and navigate back
     await addTask(newTask);
     router.back();
   };
 
-  // Handle date change from DateTimePicker
   const handleDateChange = (event: DateTimePickerEvent, selectedDate?: Date) => {
     const currentDate = selectedDate || form.date;
     setForm({ ...form, date: currentDate });
   };
 
-  // Handle time change from DateTimePicker
   const handleTimeChange = (event: DateTimePickerEvent, selectedTime?: Date) => {
     const currentTime = selectedTime || form.time;
     setForm({ ...form, time: currentTime });
   };
 
-  // Render the component
   return (
     <KeyboardAvoidingView 
       style={styles.container}
@@ -89,23 +81,38 @@ const CreateNewTaskScreen = () => {
         <View style={styles.contentContainer}>
           <TextInput
             style={styles.inputBox}
-            placeholder='Title'
+            placeholder="Title"
             placeholderTextColor="#6b917f"
+            value={form.title}
             onChangeText={(val) => setForm({ ...form, title: val })}
           />
 
-          <TextInput
-            style={styles.inputBox}
-            placeholder='Category'
-            placeholderTextColor="#6b917f"
-            onChangeText={(val) => setForm({ ...form, category: val })}
-          />
+          <View style={styles.inputBox}>
+            <Text style={styles.labelText}>Category</Text>
+            <View style={styles.categoryButtonContainer}>
+              {categories.map((category) => (
+                <TouchableOpacity
+                  key={category.value}
+                  style={[
+                    styles.categoryButton,
+                    { backgroundColor: category.color },
+                    form.category === category.value && styles.selectedCategory
+                  ]}
+                  onPress={() => setForm({ ...form, category: category.value })}
+                >
+                  <Text style={styles.categoryButtonText}>
+                    {category.label}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          </View>
 
           <View style={styles.dateTimeBox}>
             <Text style={styles.labelText}>Date</Text>
             <DateTimePicker
-              mode='date'
-              display='default'
+              mode="date"
+              display="default"
               value={form.date}
               onChange={handleDateChange}
               style={styles.dateTimePicker}
@@ -115,8 +122,8 @@ const CreateNewTaskScreen = () => {
           <View style={styles.dateTimeBox}>
             <Text style={styles.labelText}>Time</Text>
             <DateTimePicker
-              mode='time'
-              display='default'
+              mode="time"
+              display="default"
               value={form.time}
               onChange={handleTimeChange}
               style={styles.dateTimePicker}
@@ -145,7 +152,6 @@ const CreateNewTaskScreen = () => {
             </View>
           </View>
 
-          {/* Move DropDownPicker outside of ScrollView */}
           <View style={[styles.dropdownContainer, { zIndex: 1000 }]}>
             <DropDownPicker
               open={open}
@@ -154,7 +160,7 @@ const CreateNewTaskScreen = () => {
               setOpen={setOpen}
               setValue={setAlertTyp}
               setItems={setItems}
-              placeholder='Select Alert Type'
+              placeholder="Select Alert Type"
               style={styles.dropdownPicker}
               dropDownContainerStyle={styles.dropdownList}
               textStyle={styles.dropdownText}
@@ -163,40 +169,83 @@ const CreateNewTaskScreen = () => {
             />
           </View>
 
-          <TouchableOpacity style={styles.submitButton} onPress={handleSubmit}>
+          <TouchableOpacity 
+            style={styles.submitButton} 
+            onPress={handleSubmit}
+          >
             <Text style={styles.submitButtonText}>Create Task</Text>
           </TouchableOpacity>
         </View>
       </SafeAreaView>
     </KeyboardAvoidingView>
   );
-}
+};
 
-// Styles definition for each component
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#caddd7',
+  container: { 
+    flex: 1, 
+    backgroundColor: '#caddd7' 
   },
-  safeArea: {
-    flex: 1,
+  safeArea: { 
+    flex: 1 
   },
-  scrollViewContent: {
+  centered: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  contentContainer: {
     flexGrow: 1,
     justifyContent: 'center',
     alignItems: 'center',
     paddingVertical: 20,
+  },
+  checkBoxContainer: { 
+    width: '90%', 
+    backgroundColor: 'transparent', 
+    borderWidth: 0,
+    marginBottom: 15,
+    padding: 0,
   },
   inputBox: {
     backgroundColor: '#fcfcfc',
     borderRadius: 10,
     paddingHorizontal: 15,
     paddingVertical: 10,
-    height: 50,
+    minHeight: 50,
     width: '90%',
     fontSize: 16,
     color: '#0d522c',
     marginBottom: 15,
+  },
+  categoryContainer: {
+    backgroundColor: '#fcfcfc',
+    borderRadius: 10,
+    paddingHorizontal: 15,
+    paddingVertical: 10,
+    width: '90%',
+    marginBottom: 15,
+  },
+  categoryButtonContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 8,
+  },
+  categoryButton: {
+    padding: 6,
+    borderRadius: 5,
+    flex: 1,
+    marginHorizontal: 2,
+  },
+  selectedCategory: {
+    borderWidth: 2,
+    borderColor: '#0d522c',
+  },
+  categoryButtonText: {
+    color: '#ffffff',
+    fontWeight: 'bold',
+    fontSize: 11,
+    textAlign: 'center',
   },
   dateTimeBox: {
     flexDirection: 'row',
@@ -209,13 +258,13 @@ const styles = StyleSheet.create({
     width: '90%',
     marginBottom: 15,
   },
-  labelText: {
-    fontSize: 16,
-    color: '#6b917f',
-    marginRight: 10,
+  labelText: { 
+    fontSize: 16, 
+    color: '#6b917f', 
+    marginRight: 10 
   },
-  dateTimePicker: {
-    flex: 1,
+  dateTimePicker: { 
+    flex: 1 
   },
   repeatContainer: {
     backgroundColor: '#fcfcfc',
@@ -224,31 +273,30 @@ const styles = StyleSheet.create({
     padding: 15,
     marginBottom: 15,
   },
-  repeatLabel: {
-    fontSize: 16,
-    color: '#6b917f',
-    marginBottom: 10,
+  repeatLabel: { 
+    fontSize: 16, 
+    color: '#6b917f', 
+    marginBottom: 10 
   },
-  repeatBox: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
+  repeatBox: { 
+    flexDirection: 'row', 
+    justifyContent: 'space-around' 
   },
-  wheelPicker: {
-    flex: 1,
-    height: 150,
+  switchLabel: { 
+    fontSize: 16, 
+    color: '#6b917f' 
   },
   dropdownContainer: {
     width: '90%',
-    alignItems: 'center',
     marginBottom: 15,
+    zIndex: 1000,
   },
   dropdownPicker: {
     backgroundColor: '#fcfcfc',
     borderRadius: 10,
     height: 50,
-    width: '100%',
-    borderWidth: 0, // Remove border width
-    borderColor: 'transparent', // Set border color to transparent
+    borderWidth: 0,
+    borderColor: 'transparent',
   },
   dropdownList: {
     backgroundColor: '#fcfcfc',
@@ -259,6 +307,19 @@ const styles = StyleSheet.create({
   },
   dropdownPlaceholder: {
     color: '#6b917f',
+  },
+  wheelPicker: {
+    flex: 1,
+    height: 150,
+  },
+  deleteButton: {
+    backgroundColor: '#ff4d4d',
+    borderRadius: 50,
+    width: 50,
+    height: 50,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 15,
   },
   submitButton: {
     backgroundColor: '#77bba2',
@@ -272,34 +333,6 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: 'bold',
   },
-  contentContainer: {
-    flexGrow: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingVertical: 20,
-  },
-  categoryItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 15,
-    borderBottomWidth: 1,
-    borderBottomColor: '#eee',
-  },
-  categoryDot: {
-    width: 12,
-    height: 12,
-    borderRadius: 6,
-    marginRight: 10,
-  },
-  categoryText: {
-    fontSize: 16,
-    color: '#0d522c',
-  },
-  dropdownLabel: {
-    fontSize: 16,
-    color: '#0d522c',
-  },
-
 });
 
 export default CreateNewTaskScreen;

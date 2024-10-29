@@ -1,11 +1,11 @@
 export const categories = [
-    { label: 'Wellness', value: 'wellness', color: '#4A90E2' }, // blue
-    { label: 'Grocery', value: 'grocery', color: '#2ECC71' },   // green
-    { label: 'Home', value: 'home', color: '#F1C40F' },        // yellow
-    { label: 'Car', value: 'car', color: '#E74C3C' },          // red
-  ];
-  
-  export const getCategoryColor = (categoryValue: string): string => {
-    const category = categories.find(cat => cat.value === categoryValue);
-    return category?.color || '#6b917f'; // default color if category not found
-  };
+  { label: 'Home', value: 'household', color: '#ee6b6e' },
+  { label: 'Car', value: 'car', color: '#F9E076' },
+  { label: 'Grocery', value: 'grocery', color: '#85C285' },
+  { label: 'Health', value: 'health', color: '#51A0D5' },
+];
+
+export const getCategoryColor = (category: string) => {
+  const foundCategory = categories.find(c => c.value === category);
+  return foundCategory ? foundCategory.color : '#000000';
+};

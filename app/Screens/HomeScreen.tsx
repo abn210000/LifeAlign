@@ -7,6 +7,7 @@ import { useRouter } from 'expo-router';
 import { Feather, AntDesign, Ionicons } from '@expo/vector-icons';
 import { useTaskContext } from '../src/context/TaskContext';
 import { Task } from '../src/types/Tasks';
+import { categories, getCategoryColor } from '../src/config/categories';
 
 // Home screen component
 export default function HomeScreen() {
@@ -25,33 +26,51 @@ export default function HomeScreen() {
     setSelectedDate(day.dateString);
   };
 
+  // Get category color by value
+  const getCategoryDetails = (categoryValue: string) => {
+    const category = categories.find(cat => cat.value === categoryValue);
+    return {
+      color: category?.color || '#6b917f',
+      label: category?.label || categoryValue
+    };
+  };
+
   // Task item component
-  const TaskItem = ({ task }: { task: Task }) => (
-    <TouchableOpacity 
-      style={styles.taskItem}
-      onPress={() => router.push({
-        pathname: '/Screens/EditTaskList',
-        params: { taskId: task.id }
-      })}
-    >
-      <View style={styles.taskLeftContent}>
-        <TouchableOpacity 
-          style={[styles.checkbox, task.completed && styles.checkboxChecked]}
-          onPress={() => updateTask(task.id, { completed: !task.completed })}
-        >
-          {task.completed && <Feather name="check" size={16} color="#ffffff" />}
-        </TouchableOpacity>
-        <View style={styles.taskTextContent}>
-          <Text style={[
-            styles.taskTitle,
-            task.completed && styles.taskTitleCompleted
-          ]}>{task.title}</Text>
-          <Text style={styles.taskCategory}>{task.category}</Text>
+  const TaskItem = ({ task }: { task: Task }) => {
+    const categoryDetails = getCategoryDetails(task.category);
+    
+    return (
+      <TouchableOpacity 
+        style={styles.taskItem}
+        onPress={() => router.push({
+          pathname: '/Screens/EditTaskList',
+          params: { taskId: task.id }
+        })}
+      >
+        <View style={styles.taskLeftContent}>
+          <TouchableOpacity 
+            style={[styles.checkbox, task.completed && styles.checkboxChecked]}
+            onPress={() => updateTask(task.id, { completed: !task.completed })}
+          >
+            {task.completed && <Feather name="check" size={16} color="#ffffff" />}
+          </TouchableOpacity>
+          <View style={styles.taskTextContent}>
+            <Text style={[
+              styles.taskTitle,
+              task.completed && styles.taskTitleCompleted
+            ]}>{task.title}</Text>
+            <View style={[
+              styles.categoryBox,
+              { backgroundColor: categoryDetails.color }
+            ]}>
+              <Text style={styles.categoryText}>{categoryDetails.label}</Text>
+            </View>
+          </View>
         </View>
-      </View>
-      <Text style={styles.taskTime}>{task.time}</Text>
-    </TouchableOpacity>
-  );
+        <Text style={styles.taskTime}>{task.time}</Text>
+      </TouchableOpacity>
+    );
+  };
 
   // Render the component
   return (
@@ -212,14 +231,23 @@ const styles = StyleSheet.create({
     textDecorationLine: 'line-through',
     color: '#6b917f',
   },
-  taskCategory: {
-    fontSize: 14,
-    color: '#6b917f',
+  categoryBox: {
+    alignSelf: 'flex-start',
+    paddingVertical: 4,
+    paddingHorizontal: 8,
+    borderRadius: 4,
+    marginTop: 2,
+  },
+  categoryText: {
+    color: '#ffffff',
+    fontSize: 12,
+    fontWeight: 'bold',
   },
   taskTime: {
     fontSize: 14,
     color: '#0d522c',
     fontWeight: '500',
+    marginLeft: 8,
   },
   noTasksContainer: {
     flex: 1,

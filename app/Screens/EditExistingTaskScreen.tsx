@@ -8,7 +8,6 @@ import {
   Platform,
   KeyboardAvoidingView,
   TouchableOpacity,
-  ScrollView,
   ActivityIndicator,
 } from 'react-native';
 import moment from 'moment';
@@ -16,18 +15,32 @@ import DropDownPicker from 'react-native-dropdown-picker';
 import { WheelPicker } from 'react-native-infinite-wheel-picker';
 import { useRouter } from 'expo-router';
 import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
-import { CheckBox } from 'react-native-elements';
 import { Feather } from '@expo/vector-icons';
 import { useLocalSearchParams } from 'expo-router';
 import { useTaskContext } from '../src/context/TaskContext';
 import { TaskService } from '../src/services/TaskService';
+import { categories } from '../src/config/categories';
 
-// Screen for editing an existing task
+// Custom checkbox component to replace React Native Elements CheckBox
+const CustomCheckbox = ({ checked, onPress, label }: { checked: boolean; onPress: () => void; label: string }) => (
+  <TouchableOpacity 
+    style={styles.customCheckbox} 
+    onPress={onPress}
+  >
+    <View style={[
+      styles.checkbox,
+      checked && styles.checkboxChecked
+    ]}>
+      {checked && <Feather name="check" size={16} color="#fff" />}
+    </View>
+    <Text style={styles.checkboxLabel}>{label}</Text>
+  </TouchableOpacity>
+);
+
 const EditExistingTaskScreen = () => {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(true);
 
-  //  Form state for storing task data
   const [form, setForm] = useState({
     title: '',
     category: '',
@@ -35,11 +48,10 @@ const EditExistingTaskScreen = () => {
     time: new Date(),
     alertType: '',
     repeatNum: 0,
-    repeatPeriod: '',
+    repeatPeriod: '-',
     completed: false,
   });
 
-  // State for dropdown and picker elements
   const [open, setOpen] = useState(false);
   const [alertTyp, setAlertTyp] = useState('');
   const [items, setItems] = useState([
@@ -48,28 +60,32 @@ const EditExistingTaskScreen = () => {
     { label: 'Gradual', value: 'gradual' },
   ]);
 
-  const numChoices = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10];  // Repeat frequency choices
-  const periods = ['-', 'Days', 'Weeks', 'Months', 'Years'];  // Repeat period choices
+  const numChoices = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
+  const periods = ['-', 'Days', 'Weeks', 'Months', 'Years'];
 
-  const { updateTask, deleteTask } = useTaskContext();  // Accessing context to update and delete a task
-  const { taskId } = useLocalSearchParams();  // Get the taskId from the URL
-
-  // Ensure taskId is treated as a string
+  const { updateTask, deleteTask } = useTaskContext();
+  const { taskId } = useLocalSearchParams();
   const stringTaskId = Array.isArray(taskId) ? taskId[0] : taskId;
 
-  // Load existing task data
+  const getValidPeriodIndex = (period: string) => {
+    const index = periods.indexOf(period);
+    return index >= 0 ? index : 0;
+  };
+
   useEffect(() => {
     const loadTask = async () => {
       try {
         const task = await TaskService.getTask(stringTaskId);
         if (task) {
-          // Parse the date and time strings into Date objects
           const taskDate = new Date(task.date);
           const [hours, minutes] = task.time.split(':').map(Number);
           const taskTime = new Date();
           taskTime.setHours(hours, minutes);
 
-          // Set the form state with the task data
+          const validRepeatPeriod = task.repeatPeriod && periods.includes(task.repeatPeriod) 
+            ? task.repeatPeriod 
+            : '-';
+
           setForm({
             title: task.title,
             category: task.category || '',
@@ -77,7 +93,7 @@ const EditExistingTaskScreen = () => {
             time: taskTime,
             alertType: task.alertType || '',
             repeatNum: task.repeatNum || 0,
-            repeatPeriod: task.repeatPeriod || '',
+            repeatPeriod: validRepeatPeriod,
             completed: task.completed || false,
           });
           setAlertTyp(task.alertType || '');
@@ -92,7 +108,6 @@ const EditExistingTaskScreen = () => {
     loadTask();
   }, [stringTaskId]);
 
-  // Handle form submission
   const handleSubmit = async () => {
     const updates = {
       title: form.title,
@@ -105,30 +120,25 @@ const EditExistingTaskScreen = () => {
       completed: form.completed
     };
 
-    // Update the task with the new data and navigate back
     await updateTask(stringTaskId, updates);
     router.back();
   };
 
-  // Handle task deletion
   const handleDelete = async () => {
     await deleteTask(stringTaskId);
     router.back();
   };
 
-  //  Handle date change from DateTimePicker
   const handleDateChange = (event: DateTimePickerEvent, selectedDate?: Date) => {
     const currentDate = selectedDate || form.date;
     setForm({ ...form, date: currentDate });
   };
 
-  // Handle time change from DateTimePicker
   const handleTimeChange = (event: DateTimePickerEvent, selectedTime?: Date) => {
     const currentTime = selectedTime || form.time;
     setForm({ ...form, time: currentTime });
   };
 
-  // Toggle task completion status
   const toggleCompletion = () => {
     setForm((prevForm) => ({ ...prevForm, completed: !prevForm.completed }));
   };
@@ -141,7 +151,6 @@ const EditExistingTaskScreen = () => {
     );
   }
 
-  // Render the component
   return (
     <KeyboardAvoidingView
       style={styles.container}
@@ -149,13 +158,12 @@ const EditExistingTaskScreen = () => {
     >
       <SafeAreaView style={styles.safeArea}>
         <View style={styles.contentContainer}>
-          <CheckBox
-            title="Mark as Complete"
+          <CustomCheckbox
             checked={form.completed}
             onPress={toggleCompletion}
-            containerStyle={styles.checkBoxContainer}
-            textStyle={styles.switchLabel}
+            label="Mark as Complete"
           />
+
           <TextInput
             style={styles.inputBox}
             placeholder="Title"
@@ -164,13 +172,24 @@ const EditExistingTaskScreen = () => {
             onChangeText={(val) => setForm({ ...form, title: val })}
           />
 
-          <TextInput
-            style={styles.inputBox}
-            placeholder="Category"
-            placeholderTextColor="#6b917f"
-            value={form.category}
-            onChangeText={(val) => setForm({ ...form, category: val })}
-          />
+          <View style={styles.inputBox}>
+            <Text style={styles.labelText}>Category</Text>
+            <View style={styles.categoryButtonContainer}>
+              {categories.map((category) => (
+                <TouchableOpacity
+                  key={category.value}
+                  style={[
+                    styles.categoryButton,
+                    { backgroundColor: category.color },
+                    form.category === category.value && styles.selectedCategory
+                  ]}
+                  onPress={() => setForm({ ...form, category: category.value })}
+                >
+                  <Text style={styles.categoryButtonText}>{category.label}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          </View>
 
           <View style={styles.dateTimeBox}>
             <Text style={styles.labelText}>Date</Text>
@@ -207,7 +226,7 @@ const EditExistingTaskScreen = () => {
               />
               <WheelPicker
                 data={periods}
-                selectedIndex={periods.indexOf(form.repeatPeriod)}
+                selectedIndex={getValidPeriodIndex(form.repeatPeriod)}
                 onChangeValue={(val) => setForm({ ...form, repeatPeriod: periods[val] })}
                 infiniteScroll={false}
                 containerStyle={styles.wheelPicker}
@@ -246,31 +265,81 @@ const EditExistingTaskScreen = () => {
   );
 };
 
-// Styles
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#caddd7' },
-  safeArea: { flex: 1 },
-  scrollViewContent: {
-    flexGrow: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingVertical: 20,
+  container: { 
+    flex: 1, 
+    backgroundColor: '#caddd7' 
+  },
+  safeArea: { 
+    flex: 1 
   },
   centered: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
   },
+  contentContainer: {
+    flexGrow: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: 20,
+  },
+  customCheckbox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    width: '90%',
+    marginBottom: 15,
+    padding: 8,
+  },
+  checkbox: {
+    width: 24,
+    height: 24,
+    borderRadius: 4,
+    borderWidth: 2,
+    borderColor: '#0d522c',
+    marginRight: 8,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'transparent',
+  },
+  checkboxChecked: {
+    backgroundColor: '#0d522c',
+  },
+  checkboxLabel: {
+    fontSize: 16,
+    color: '#6b917f',
+  },
   inputBox: {
     backgroundColor: '#fcfcfc',
     borderRadius: 10,
     paddingHorizontal: 15,
     paddingVertical: 10,
-    height: 50,
+    minHeight: 50,
     width: '90%',
     fontSize: 16,
     color: '#0d522c',
     marginBottom: 15,
+  },
+  categoryButtonContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 8,
+  },
+  categoryButton: {
+    padding: 6,
+    borderRadius: 5,
+    flex: 1,
+    marginHorizontal: 2,
+  },
+  selectedCategory: {
+    borderWidth: 2,
+    borderColor: '#0d522c',
+  },
+  categoryButtonText: {
+    color: '#ffffff',
+    fontWeight: 'bold',
+    fontSize: 11,
+    textAlign: 'center',
   },
   dateTimeBox: {
     flexDirection: 'row',
@@ -283,8 +352,14 @@ const styles = StyleSheet.create({
     width: '90%',
     marginBottom: 15,
   },
-  labelText: { fontSize: 16, color: '#6b917f', marginRight: 10 },
-  dateTimePicker: { flex: 1 },
+  labelText: { 
+    fontSize: 16, 
+    color: '#6b917f', 
+    marginRight: 10 
+  },
+  dateTimePicker: { 
+    flex: 1 
+  },
   repeatContainer: {
     backgroundColor: '#fcfcfc',
     borderRadius: 10,
@@ -292,23 +367,26 @@ const styles = StyleSheet.create({
     padding: 15,
     marginBottom: 15,
   },
-  repeatLabel: { fontSize: 16, color: '#6b917f', marginBottom: 10 },
-  repeatBox: { flexDirection: 'row', justifyContent: 'space-around' },
-  switchLabel: { fontSize: 16, color: '#6b917f' },
+  repeatLabel: { 
+    fontSize: 16, 
+    color: '#6b917f', 
+    marginBottom: 10 
+  },
+  repeatBox: { 
+    flexDirection: 'row', 
+    justifyContent: 'space-around' 
+  },
   dropdownContainer: {
     width: '90%',
-    alignItems: 'center',
     marginBottom: 15,
+    zIndex: 1000,
   },
-  checkBoxContainer: { width: '90%', backgroundColor: 'transparent', borderWidth: 0 },
-  
   dropdownPicker: {
     backgroundColor: '#fcfcfc',
     borderRadius: 10,
     height: 50,
-    width: '100%',
-    borderWidth: 0, // Remove border width
-    borderColor: 'transparent', // Set border color to transparent
+    borderWidth: 0,
+    borderColor: 'transparent',
   },
   dropdownList: {
     backgroundColor: '#fcfcfc',
@@ -331,7 +409,7 @@ const styles = StyleSheet.create({
     height: 50,
     justifyContent: 'center',
     alignItems: 'center',
-    marginVertical: 15,
+    marginBottom: 15,
   },
   submitButton: {
     backgroundColor: '#77bba2',
@@ -344,12 +422,6 @@ const styles = StyleSheet.create({
     color: '#0d522c',
     fontSize: 18,
     fontWeight: 'bold',
-  },
-  contentContainer: {
-    flexGrow: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingVertical: 20,
   },
 });
 
