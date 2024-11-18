@@ -10,12 +10,14 @@ import {
   TouchableOpacity,
 } from "react-native";
 import moment from 'moment';
-import DropDownPicker from 'react-native-dropdown-picker';
 import { WheelPicker } from 'react-native-infinite-wheel-picker';
 import { useRouter } from 'expo-router';
 import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
 import { useTaskContext } from '../src/context/TaskContext';
 import { categories, getCategoryColor } from '../src/config/categories';
+import { scheduleNotification } from '../src/notifications';
+
+
 
 const CreateNewTaskScreen = () => {
   const router = useRouter();
@@ -33,33 +35,41 @@ const CreateNewTaskScreen = () => {
   const [categoryOpen, setCategoryOpen] = useState(false);
   const [categoryItems] = useState(categories);
 
-  const [open, setOpen] = useState(false);
-  const [alertTyp, setAlertTyp] = useState('');
-  const [items, setItems] = useState([
-    { label: 'None', value: 'none' },
-    { label: 'Standard', value: 'standard' },
-    { label: 'Gradual', value: 'gradual' }
-  ]);
-
   const numChoices = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
   const periods = ['-', 'Days', 'Weeks', 'Months', 'Years'];
 
   const { addTask } = useTaskContext();
 
   const handleSubmit = async () => {
-    const newTask = {
-      title: form.title,
-      category: form.category,
-      date: moment(form.date).format('YYYY-MM-DD'),
-      time: moment(form.time).format('HH:mm'),
-      alertType: alertTyp,
-      repeatNum: form.repeatNum,
-      repeatPeriod: form.repeatPeriod,
-      completed: false
-    };
+    try {
+      // Schedule notifications and get notification ids
+      const ids = await scheduleNotification(
+        form.title,
+        moment(form.date).format('YYYY-MM-DD'),
+        moment(form.time).format('HH:mm'),
+        form.alertType
+      );
+      
+      const newTask = {
+        id: Date.now().toString(),
+        title: form.title,
+        category: form.category,
+        date: moment(form.date).format('YYYY-MM-DD'),
+        time: moment(form.time).format('HH:mm'),
+        alertType: form.alertType,
+        repeatNum: form.repeatNum,
+        repeatPeriod: form.repeatPeriod,
+        completed: false,
+        notifId: ids,
+        createdAt: moment().toISOString(),
+        updatedAt: moment().toISOString()
+      };
 
-    await addTask(newTask);
-    router.back();
+      await addTask(newTask);
+      router.back();
+    } catch (error) {
+      console.error('Error creating task:', error);
+    }
   };
 
   const handleDateChange = (event: DateTimePickerEvent, selectedDate?: Date) => {
@@ -152,21 +162,28 @@ const CreateNewTaskScreen = () => {
             </View>
           </View>
 
-          <View style={[styles.dropdownContainer, { zIndex: 1000 }]}>
-            <DropDownPicker
-              open={open}
-              value={alertTyp}
-              items={items}
-              setOpen={setOpen}
-              setValue={setAlertTyp}
-              setItems={setItems}
-              placeholder="Select Alert Type"
-              style={styles.dropdownPicker}
-              dropDownContainerStyle={styles.dropdownList}
-              textStyle={styles.dropdownText}
-              placeholderStyle={styles.dropdownPlaceholder}
-              zIndex={1000}
-            />
+          <View style={styles.inputBox}>
+            <Text style={styles.labelText}>Alert Type</Text>
+            <View style={styles.alertButtonContainer}>
+              {[
+                { label: 'None', value: 'none' },
+                { label: 'Standard', value: 'standard' },
+                { label: 'Gradual', value: 'gradual' }
+              ].map((alert) => (
+                <TouchableOpacity
+                  key={alert.value}
+                  style={[
+                    styles.alertButton,
+                    form.alertType === alert.value && styles.selectedAlert
+                  ]}
+                  onPress={() => setForm({ ...form, alertType: alert.value })}
+                >
+                  <Text style={styles.alertButtonText}>
+                    {alert.label}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
           </View>
 
           <TouchableOpacity 
@@ -286,27 +303,28 @@ const styles = StyleSheet.create({
     fontSize: 16, 
     color: '#6b917f' 
   },
-  dropdownContainer: {
-    width: '90%',
-    marginBottom: 15,
-    zIndex: 1000,
+  alertButtonContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 8,
   },
-  dropdownPicker: {
-    backgroundColor: '#fcfcfc',
-    borderRadius: 10,
-    height: 50,
-    borderWidth: 0,
-    borderColor: 'transparent',
+  alertButton: {
+    padding: 8,
+    borderRadius: 5,
+    flex: 1,
+    marginHorizontal: 2,
+    backgroundColor: '#e0e0e0',
+    alignItems: 'center',
   },
-  dropdownList: {
-    backgroundColor: '#fcfcfc',
+  selectedAlert: {
+    backgroundColor: '#77bba2',
+    borderWidth: 2,
+    borderColor: '#0d522c',
   },
-  dropdownText: {
-    fontSize: 16,
-    color: '#6b917f',
-  },
-  dropdownPlaceholder: {
-    color: '#6b917f',
+  alertButtonText: {
+    color: '#0d522c',
+    fontWeight: 'bold',
+    fontSize: 14,
   },
   wheelPicker: {
     flex: 1,

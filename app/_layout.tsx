@@ -1,8 +1,42 @@
-import React from 'react';
-import { TaskProvider } from './src/context/TaskContext'; // Assuming your context is defined here
+import React, { useEffect } from 'react';
+import { TaskProvider } from './src/context/TaskContext'; 
 import { Stack } from 'expo-router';
+import * as Notifications from 'expo-notifications';
+import { Platform } from 'react-native';
+import { registerForPushNotificationsAsync } from './src/notifications';
 
 export default function App() {
+  useEffect(() => {
+    registerForPushNotificationsAsync();
+    setupNotifications();
+  }, []);
+
+  async function setupNotifications() {
+    try {
+      // Set up notification channel for Android
+      if (Platform.OS === 'android') {
+        await Notifications.setNotificationChannelAsync('task-alerts', {
+          name: 'Task Alerts',
+          importance: Notifications.AndroidImportance.HIGH,
+          vibrationPattern: [0, 250, 250, 250],
+          lightColor: '#FF231F7C',
+        });
+      }
+
+      // Set up notification handler
+      Notifications.addNotificationReceivedListener(notification => {
+        console.log('Notification received:', notification);
+      });
+
+      Notifications.addNotificationResponseReceivedListener(response => {
+        console.log('Notification response received:', response);
+      });
+
+    } catch (error) {
+      console.error('Error setting up notifications:', error);
+    }
+  }
+
   return (
     <TaskProvider>
       <Layout />

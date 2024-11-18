@@ -8,6 +8,7 @@ import { Feather, AntDesign, Ionicons } from '@expo/vector-icons';
 import { useTaskContext } from '../src/context/TaskContext';
 import { Task } from '../src/types/Tasks';
 import { categories, getCategoryColor } from '../src/config/categories';
+import moment from 'moment';
 
 // Home screen component
 export default function HomeScreen() {
@@ -20,6 +21,12 @@ export default function HomeScreen() {
     updateTask,
     markedDates
   } = useTaskContext();
+
+  // Filter tasks for selected date
+  const filteredTasks = tasks.filter(task => {
+    const taskDate = moment(task.date).format('YYYY-MM-DD');
+    return taskDate === selectedDate;
+  });
 
   // Handle day press on calendar
   const handleDayPress = (day: { dateString: string }) => {
@@ -104,18 +111,14 @@ export default function HomeScreen() {
 
       <View style={styles.taskListContainer}>
         <Text style={styles.dateHeader}>
-          {new Date(selectedDate).toLocaleDateString('en-US', { 
-            weekday: 'long', 
-            month: 'long', 
-            day: 'numeric' 
-          })}
+          {moment(selectedDate).format('dddd, MMMM D')}
         </Text>
         
         {isLoading ? (
           <ActivityIndicator size="large" color="#0d522c" />
-        ) : tasks.length > 0 ? (
+        ) : filteredTasks.length > 0 ? (
           <FlatList
-            data={tasks}
+            data={filteredTasks}
             renderItem={({ item }) => <TaskItem task={item} />}
             keyExtractor={item => item.id}
             style={styles.taskList}

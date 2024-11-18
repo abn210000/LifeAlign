@@ -11,7 +11,6 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import moment from 'moment';
-import DropDownPicker from 'react-native-dropdown-picker';
 import { WheelPicker } from 'react-native-infinite-wheel-picker';
 import { useRouter } from 'expo-router';
 import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
@@ -20,6 +19,7 @@ import { useLocalSearchParams } from 'expo-router';
 import { useTaskContext } from '../src/context/TaskContext';
 import { TaskService } from '../src/services/TaskService';
 import { categories } from '../src/config/categories';
+import { cancelNotification, scheduleNotification } from '../src/notifications';
 
 // Custom checkbox component to replace React Native Elements CheckBox
 const CustomCheckbox = ({ checked, onPress, label }: { checked: boolean; onPress: () => void; label: string }) => (
@@ -52,13 +52,7 @@ const EditExistingTaskScreen = () => {
     completed: false,
   });
 
-  const [open, setOpen] = useState(false);
-  const [alertTyp, setAlertTyp] = useState('');
-  const [items, setItems] = useState([
-    { label: 'None', value: 'none' },
-    { label: 'Standard', value: 'standard' },
-    { label: 'Gradual', value: 'gradual' },
-  ]);
+  const [alertType, setAlertType] = useState(form?.alertType || 'none');
 
   const numChoices = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
   const periods = ['-', 'Days', 'Weeks', 'Months', 'Years'];
@@ -77,7 +71,7 @@ const EditExistingTaskScreen = () => {
       try {
         const task = await TaskService.getTask(stringTaskId);
         if (task) {
-          const taskDate = new Date(task.date);
+          const taskDate = moment(task.date).toDate();
           const [hours, minutes] = task.time.split(':').map(Number);
           const taskTime = new Date();
           taskTime.setHours(hours, minutes);
@@ -96,7 +90,7 @@ const EditExistingTaskScreen = () => {
             repeatPeriod: validRepeatPeriod,
             completed: task.completed || false,
           });
-          setAlertTyp(task.alertType || '');
+          setAlertType(task.alertType || '');
         }
       } catch (error) {
         console.error('Error loading task:', error);
@@ -109,24 +103,50 @@ const EditExistingTaskScreen = () => {
   }, [stringTaskId]);
 
   const handleSubmit = async () => {
-    const updates = {
-      title: form.title,
-      category: form.category,
-      date: moment(form.date).format('YYYY-MM-DD'),
-      time: moment(form.time).format('HH:mm'),
-      alertType: alertTyp,
-      repeatNum: form.repeatNum,
-      repeatPeriod: form.repeatPeriod,
-      completed: form.completed
-    };
+    try {
+      // Cancel old notifications and schedule new ones
+      const task = await TaskService.getTask(stringTaskId);
+      if (task?.notifId) {
+        await cancelNotification(task.notifId);
+      }
 
-    await updateTask(stringTaskId, updates);
-    router.back();
+      const ids = await scheduleNotification(
+        form.title,
+        moment(form.date).format('YYYY-MM-DD'),
+        moment(form.time).format('HH:mm'),
+        alertType
+      );
+
+      const updates = {
+        title: form.title,
+        category: form.category,
+        date: moment(form.date).format('YYYY-MM-DD'),
+        time: moment(form.time).format('HH:mm'),
+        alertType: alertType,
+        repeatNum: form.repeatNum,
+        repeatPeriod: form.repeatPeriod,
+        completed: form.completed,
+        notifId: ids, // Store new notification IDs
+      };
+
+      await updateTask(stringTaskId, updates);
+      router.back();
+    } catch (error) {
+      console.error('Error updating task:', error);
+    }
   };
 
   const handleDelete = async () => {
-    await deleteTask(stringTaskId);
-    router.back();
+    try {
+      const task = await TaskService.getTask(stringTaskId);
+      if (task?.notifId) {
+        await cancelNotification(task.notifId);
+      }
+      await deleteTask(stringTaskId);
+      router.back();
+    } catch (error) {
+      console.error('Error deleting task:', error);
+    }
   };
 
   const handleDateChange = (event: DateTimePickerEvent, selectedDate?: Date) => {
@@ -219,7 +239,9 @@ const EditExistingTaskScreen = () => {
               <WheelPicker
                 data={numChoices}
                 selectedIndex={form.repeatNum}
-                onChangeValue={(val) => setForm({ ...form, repeatNum: val })}
+                onChangeValue={(val) => {
+                  setForm(prev => ({ ...prev, repeatNum: val }))
+                }}
                 infiniteScroll={false}
                 containerStyle={styles.wheelPicker}
                 restElements={1}
@@ -227,7 +249,9 @@ const EditExistingTaskScreen = () => {
               <WheelPicker
                 data={periods}
                 selectedIndex={getValidPeriodIndex(form.repeatPeriod)}
-                onChangeValue={(val) => setForm({ ...form, repeatPeriod: periods[val] })}
+                onChangeValue={(val) => {
+                  setForm(prev => ({ ...prev, repeatPeriod: periods[val] }));
+                }}
                 infiniteScroll={false}
                 containerStyle={styles.wheelPicker}
                 restElements={1}
@@ -235,21 +259,28 @@ const EditExistingTaskScreen = () => {
             </View>
           </View>
 
-          <View style={[styles.dropdownContainer, { zIndex: 1000 }]}>
-            <DropDownPicker
-              open={open}
-              value={alertTyp}
-              items={items}
-              setOpen={setOpen}
-              setValue={setAlertTyp}
-              setItems={setItems}
-              placeholder='Select Alert Type'
-              style={styles.dropdownPicker}
-              dropDownContainerStyle={styles.dropdownList}
-              textStyle={styles.dropdownText}
-              placeholderStyle={styles.dropdownPlaceholder}
-              zIndex={1000}
-            />
+          <View style={styles.inputBox}>
+            <Text style={styles.labelText}>Alert Type</Text>
+            <View style={styles.alertButtonContainer}>
+              {[
+                { label: 'None', value: 'none' },
+                { label: 'Standard', value: 'standard' },
+                { label: 'Gradual', value: 'gradual' }
+              ].map((alert) => (
+                <TouchableOpacity
+                  key={alert.value}
+                  style={[
+                    styles.alertButton,
+                    alertType === alert.value && styles.selectedAlert
+                  ]}
+                  onPress={() => setAlertType(alert.value)}
+                >
+                  <Text style={styles.alertButtonText}>
+                    {alert.label}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
           </View>
 
           <TouchableOpacity style={styles.deleteButton} onPress={handleDelete}>
@@ -364,43 +395,44 @@ const styles = StyleSheet.create({
     backgroundColor: '#fcfcfc',
     borderRadius: 10,
     width: '90%',
-    padding: 15,
+    padding: 10,
     marginBottom: 15,
   },
   repeatLabel: { 
     fontSize: 16, 
     color: '#6b917f', 
-    marginBottom: 10 
+    marginBottom: 3
   },
   repeatBox: { 
     flexDirection: 'row', 
     justifyContent: 'space-around' 
   },
-  dropdownContainer: {
-    width: '90%',
-    marginBottom: 15,
-    zIndex: 1000,
+  alertButtonContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 8,
   },
-  dropdownPicker: {
-    backgroundColor: '#fcfcfc',
-    borderRadius: 10,
-    height: 50,
-    borderWidth: 0,
-    borderColor: 'transparent',
+  alertButton: {
+    padding: 8,
+    borderRadius: 5,
+    flex: 1,
+    marginHorizontal: 2,
+    backgroundColor: '#e0e0e0',
+    alignItems: 'center',
   },
-  dropdownList: {
-    backgroundColor: '#fcfcfc',
+  selectedAlert: {
+    backgroundColor: '#77bba2',
+    borderWidth: 2,
+    borderColor: '#0d522c',
   },
-  dropdownText: {
-    fontSize: 16,
-    color: '#6b917f',
-  },
-  dropdownPlaceholder: {
-    color: '#6b917f',
+  alertButtonText: {
+    color: '#0d522c',
+    fontWeight: 'bold',
+    fontSize: 14,
   },
   wheelPicker: {
     flex: 1,
-    height: 150,
+    height: 100,
   },
   deleteButton: {
     backgroundColor: '#ff4d4d',

@@ -2,6 +2,7 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { Task } from '../types/Tasks';
 import { TaskService } from '../services/TaskService';
+import moment from 'moment';
 
 // Task context type
 interface TaskContextType {
@@ -22,7 +23,7 @@ const TaskContext = createContext<TaskContextType | undefined>(undefined);
 // Task provider component
 export const TaskProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [tasks, setTasks] = useState<Task[]>([]);
-  const [selectedDate, setSelectedDate] = useState(new Date().toLocaleDateString('en-CA'));
+  const [selectedDate, setSelectedDate] = useState(moment().format('YYYY-MM-DD'));
   const [isLoading, setIsLoading] = useState(true);
   const [markedDates, setMarkedDates] = useState<{ [date: string]: { marked: boolean } }>({});
 

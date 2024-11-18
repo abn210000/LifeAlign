@@ -4,6 +4,7 @@ import { useRouter } from 'expo-router';
 import { useTaskContext } from '../src/context/TaskContext';
 import { Task } from '../src/types/Tasks';
 import { categories } from '../src/config/categories';
+import moment from 'moment';
 
 export default function EditTaskList() {
   const router = useRouter();
@@ -18,11 +19,7 @@ export default function EditTaskList() {
   };
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric'
-    });
+    return moment(dateString).format('MMM D, YYYY');
   };
 
   const renderTaskItem = ({ item }: { item: Task }) => {
