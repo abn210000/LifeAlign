@@ -31,9 +31,19 @@ export const TaskProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const refreshTasks = async () => {
     try {
       setIsLoading(true);
-      const tasksForDate = await TaskService.getTasksByDate(selectedDate);
+      const allTasks = await TaskService.getAllTasks();
+      const tasksForDate = allTasks.filter(task => 
+        moment(task.date).format('YYYY-MM-DD') === selectedDate
+      );
       setTasks(tasksForDate);
-      const dates = await TaskService.getDatesWithTasks();
+      
+      // Update marked dates
+      const dates = allTasks.reduce((acc, task) => {
+        const date = moment(task.date).format('YYYY-MM-DD');
+        acc[date] = { marked: true };
+        return acc;
+      }, {} as { [key: string]: { marked: boolean } });
+      
       setMarkedDates(dates);
     } catch (error) {
       console.error('Error refreshing tasks:', error);
@@ -42,10 +52,29 @@ export const TaskProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   };
 
-  //  Load tasks on initial render
+  // Update when selected date changes
   useEffect(() => {
     refreshTasks();
   }, [selectedDate]);
+
+  //  Load tasks on initial render
+  useEffect(() => {
+    // Add listener for task updates
+    const refreshListener = async () => {
+      const updatedTasks = await TaskService.getAllTasks();
+      setTasks(updatedTasks);
+    };
+
+    TaskService.addListener(refreshListener);
+
+    // Initial load
+    refreshListener();
+
+    // Cleanup
+    return () => {
+      TaskService.removeListener(refreshListener);
+    };
+  }, []);
 
   // Add a new task
   const addTask = async (task: Omit<Task, 'id'>) => {

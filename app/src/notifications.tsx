@@ -129,37 +129,44 @@ Notifications.addNotificationResponseReceivedListener((response) => {
     Notifications.getNotificationCategoriesAsync().then(async (category) => {
         const task = await TaskService.getTaskByNotification(response.notification.request.identifier);
         if (response.actionIdentifier === "completed") {
-            //Cancel task's notifications
             if (task?.notifId) {
                 await cancelNotification(task.notifId);
             }
-            //Update task to be completed and make the array of notification ids empty
             if (task?.id) {
                 const completedTask = { ...task, completed: true, notifId: [''] };
                 await TaskService.updateTask(task.id, completedTask);
+                // Refresh tasks in TaskContext
+                await TaskService.refreshTasks();
             }
         } else if (response.actionIdentifier === "push") {
             if (task?.date) {
-                //Cancel old notifications
                 if (task?.notifId) {
                     await cancelNotification(task.notifId);
                 }
-                //Create new date one day after old
-                let newDate = new Date(task.date);
-                let newDay = newDate.getUTCDate() + 1;
-                newDate.setDate(newDay);
-                //Schedule new notifications and update task
+                // Create new date one day after old using moment
+                const newDate = moment(task.date).add(1, 'days').format('YYYY-MM-DD');
+                
                 let newNotifIds;
                 if (task?.alertType) {
-                    newNotifIds = await scheduleNotification(task.title, moment(newDate).format('YYYY-MM-DD'), task.time, task.alertType)
+                    newNotifIds = await scheduleNotification(
+                        task.title,
+                        newDate,
+                        task.time,
+                        task.alertType
+                    );
                 }
                 if (task?.id) {
-                    const completedTask = { ...task, date: moment(newDate).format('YYYY-MM-DD'), notifId: newNotifIds };
-                    await TaskService.updateTask(task.id, completedTask);
+                    const updatedTask = {
+                        ...task,
+                        date: newDate,
+                        notifId: newNotifIds || ['']
+                    };
+                    await TaskService.updateTask(task.id, updatedTask);
+                    // Refresh tasks in TaskContext
+                    await TaskService.refreshTasks();
                 }
             }
         } else if (response.actionIdentifier === "edit") {
-            //Open app to the task's edit screen
             if (task) {
                 router.push({
                     pathname: '/Screens/EditExistingTaskScreen',
@@ -167,13 +174,13 @@ Notifications.addNotificationResponseReceivedListener((response) => {
                 });
             }
         } else if (response.actionIdentifier === "delete") {
-            //Cancel task's notifications
             if (task?.notifId) {
                 await cancelNotification(task.notifId);
             }
-            //Delete task
             if (task?.id) {
                 await TaskService.deleteTask(task.id);
+                // Refresh tasks in TaskContext
+                await TaskService.refreshTasks();
             }
         }
     });
@@ -185,40 +192,43 @@ export async function scheduleNotification(title: String, date: String, time: St
     const day = new Date(date + "T" + time);
     let stan = type.localeCompare('standard');
     let grad = type.localeCompare('gradual');
-    //Standard Notification: one-time alert at specified date and time
-    if (stan == 0 || grad == 0) {
-        let id = await Notifications.scheduleNotificationAsync({
-            content: {
-                title: "LifeAlign",
-                body: title + " is due now!",
-                sound: true,
-                priority: Notifications.AndroidNotificationPriority.HIGH,
-                categoryIdentifier: "standard"
-            },
-            trigger: {
-                type: Notifications.SchedulableTriggerInputTypes.DATE,
-                date: day
-            },
-        });
-        ids.push(id);
-        //Gradual Notifications: scheduled at certain times before the due date
-        if (grad == 0) {
-            for (let i = 0; i < 9; i++) {
-                let d = moment(day).subtract(diffs[i]).toDate();
-                let now = new Date();
-                if (d > now) {
-                    let id = await Notifications.scheduleNotificationAsync({
-                        content: {
-                            title: "LifeAlign",
-                            body: title + " is due in " + numbers[i] + " " + periods[i] + "!",
-                            categoryIdentifier: "standard"
-                        },
-                        trigger: {
-                            type: Notifications.SchedulableTriggerInputTypes.DATE,
-                            date: d
-                        },
-                    });
-                    ids.push(id);
+
+    // Only schedule notifications for future dates
+    if (day > new Date()) {
+        if (stan == 0 || grad == 0) {
+            let id = await Notifications.scheduleNotificationAsync({
+                content: {
+                    title: "LifeAlign",
+                    body: title + " is due now!",
+                    sound: true,
+                    priority: Notifications.AndroidNotificationPriority.HIGH,
+                    categoryIdentifier: "standard"
+                },
+                trigger: {
+                    type: Notifications.SchedulableTriggerInputTypes.DATE,
+                    date: day
+                },
+            });
+            ids.push(id);
+
+            if (grad == 0) {
+                for (let i = 0; i < 9; i++) {
+                    let d = moment(day).subtract(diffs[i]).toDate();
+                    let now = new Date();
+                    if (d > now) {
+                        let id = await Notifications.scheduleNotificationAsync({
+                            content: {
+                                title: "LifeAlign",
+                                body: title + " is due in " + numbers[i] + " " + periods[i] + "!",
+                                categoryIdentifier: "standard"
+                            },
+                            trigger: {
+                                type: Notifications.SchedulableTriggerInputTypes.DATE,
+                                date: d
+                            },
+                        });
+                        ids.push(id);
+                    }
                 }
             }
         }

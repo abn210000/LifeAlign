@@ -45,6 +45,10 @@ export default function HomeScreen() {
   // Task item component
   const TaskItem = ({ task }: { task: Task }) => {
     const categoryDetails = getCategoryDetails(task.category);
+    const isLate = moment(`${task.date} ${task.time}`).isBefore(moment()) && !task.completed;
+    
+    // Format time to 12-hour format
+    const formattedTime = moment(task.time, 'HH:mm').format('h:mm A');
     
     return (
       <TouchableOpacity 
@@ -66,15 +70,20 @@ export default function HomeScreen() {
               styles.taskTitle,
               task.completed && styles.taskTitleCompleted
             ]}>{task.title}</Text>
-            <View style={[
-              styles.categoryBox,
-              { backgroundColor: categoryDetails.color }
-            ]}>
-              <Text style={styles.categoryText}>{categoryDetails.label}</Text>
+            <View style={styles.taskMetadata}>
+              <View style={[
+                styles.categoryBox,
+                { backgroundColor: categoryDetails.color }
+              ]}>
+                <Text style={styles.categoryText}>{categoryDetails.label}</Text>
+              </View>
+              {isLate && !task.completed && (
+                <Text style={[styles.lateText, { color: '#ee6b6e' }]}>LATE</Text>
+              )}
             </View>
           </View>
         </View>
-        <Text style={styles.taskTime}>{task.time}</Text>
+        <Text style={styles.taskTime}>{formattedTime}</Text>
       </TouchableOpacity>
     );
   };
@@ -294,5 +303,16 @@ const styles = StyleSheet.create({
   },
   historyButton: {
     backgroundColor: '#77bba2',
+  },
+  taskMetadata: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: 4,
+  },
+  lateText: {
+    fontSize: 12,
+    fontWeight: 'bold',
+    marginLeft: 8,
   },
 });

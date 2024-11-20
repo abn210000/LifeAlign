@@ -6,6 +6,33 @@ const TASKS_STORAGE_KEY = '@life_align_tasks';
 
 // Task service class
 export class TaskService {
+  private static listeners: (() => void)[] = [];
+
+  // Add listener for task updates
+  static addListener(listener: () => void) {
+    this.listeners.push(listener);
+  }
+
+  // Remove listener
+  static removeListener(listener: () => void) {
+    this.listeners = this.listeners.filter(l => l !== listener);
+  }
+
+  // Notify all listeners
+  private static notifyListeners() {
+    this.listeners.forEach(listener => listener());
+  }
+
+  // Refresh tasks and notify listeners
+  static async refreshTasks() {
+    try {
+      // Notify all listeners to trigger a refresh
+      this.notifyListeners();
+    } catch (error) {
+      console.error('Error refreshing tasks:', error);
+    }
+  }
+
   static async getAllTasks(): Promise<Task[]> {
     try {
       const tasksJson = await AsyncStorage.getItem(TASKS_STORAGE_KEY);
@@ -81,6 +108,10 @@ export class TaskService {
       const updatedTask = { ...tasks[taskIndex], ...updates };
       tasks[taskIndex] = updatedTask;
       await AsyncStorage.setItem(TASKS_STORAGE_KEY, JSON.stringify(tasks));
+      
+      // Notify listeners of the update
+      this.notifyListeners();
+      
       return updatedTask;
     } catch (error) {
       console.error('Error updating task:', error);

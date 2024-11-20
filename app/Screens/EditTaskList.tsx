@@ -24,6 +24,7 @@ export default function EditTaskList() {
 
   const renderTaskItem = ({ item }: { item: Task }) => {
     const categoryDetails = getCategoryDetails(item.category);
+    const formattedTime = moment(item.time, 'HH:mm').format('h:mm A');
     
     return (
       <TouchableOpacity
@@ -43,7 +44,7 @@ export default function EditTaskList() {
               <Text style={styles.categoryText}>{categoryDetails.label}</Text>
             </View>
             <Text style={styles.taskDateTime}>
-              {formatDate(item.date)} at {item.time}
+              {formatDate(item.date)} at {formattedTime}
             </Text>
           </View>
         </View>
