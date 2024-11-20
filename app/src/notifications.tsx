@@ -4,6 +4,8 @@ import * as Device from 'expo-device';
 import * as Notifications from 'expo-notifications';
 import Constants from 'expo-constants';
 import moment from 'moment';
+import { TaskService } from '../src/services/TaskService';
+import { router } from 'expo-router';
 
 //Set Notification Handler
 Notifications.setNotificationHandler({
@@ -101,6 +103,82 @@ const diffs = [
 const numbers = [30, 1, 3, 1, 3, 1, 2, 1, 2];
 const periods = ['minutes', 'hour', 'hours', 'day', 'days', 'week', 'weeks', 'month', 'months'];
 
+//Set categories for interactive notifications
+Notifications.setNotificationCategoryAsync("standard", [
+    {
+        buttonTitle: "Mark As Completed",
+        identifier: "completed",
+        options: { opensAppToForeground: false }
+    }, {
+        buttonTitle: "Push To Tomorrow",
+        identifier: "push",
+        options: { opensAppToForeground: false }
+    }, {
+        buttonTitle: "Edit Task",
+        identifier: "edit",
+        options: { opensAppToForeground: true }
+    }, {
+        buttonTitle: "Delete Task",
+        identifier: "delete",
+        options: { opensAppToForeground: false }
+    },
+]);
+
+//Handles responses from users from interactive notifications
+Notifications.addNotificationResponseReceivedListener((response) => {
+    Notifications.getNotificationCategoriesAsync().then(async (category) => {
+        const task = await TaskService.getTaskByNotification(response.notification.request.identifier);
+        if (response.actionIdentifier === "completed") {
+            //Cancel task's notifications
+            if (task?.notifId) {
+                await cancelNotification(task.notifId);
+            }
+            //Update task to be completed and make the array of notification ids empty
+            if (task?.id) {
+                const completedTask = { ...task, completed: true, notifId: [''] };
+                await TaskService.updateTask(task.id, completedTask);
+            }
+        } else if (response.actionIdentifier === "push") {
+            if (task?.date) {
+                //Cancel old notifications
+                if (task?.notifId) {
+                    await cancelNotification(task.notifId);
+                }
+                //Create new date one day after old
+                let newDate = new Date(task.date);
+                let newDay = newDate.getUTCDate() + 1;
+                newDate.setDate(newDay);
+                //Schedule new notifications and update task
+                let newNotifIds;
+                if (task?.alertType) {
+                    newNotifIds = await scheduleNotification(task.title, moment(newDate).format('YYYY-MM-DD'), task.time, task.alertType)
+                }
+                if (task?.id) {
+                    const completedTask = { ...task, date: moment(newDate).format('YYYY-MM-DD'), notifId: newNotifIds };
+                    await TaskService.updateTask(task.id, completedTask);
+                }
+            }
+        } else if (response.actionIdentifier === "edit") {
+            //Open app to the task's edit screen
+            if (task) {
+                router.push({
+                    pathname: '/Screens/EditExistingTaskScreen',
+                    params: { taskId: task.id }
+                });
+            }
+        } else if (response.actionIdentifier === "delete") {
+            //Cancel task's notifications
+            if (task?.notifId) {
+                await cancelNotification(task.notifId);
+            }
+            //Delete task
+            if (task?.id) {
+                await TaskService.deleteTask(task.id);
+            }
+        }
+    });
+});
+
 //Schedule notifications based on alert type and return their notification ids
 export async function scheduleNotification(title: String, date: String, time: String, type: string) {
     const ids = [''];
@@ -115,6 +193,7 @@ export async function scheduleNotification(title: String, date: String, time: St
                 body: title + " is due now!",
                 sound: true,
                 priority: Notifications.AndroidNotificationPriority.HIGH,
+                categoryIdentifier: "standard"
             },
             trigger: {
                 type: Notifications.SchedulableTriggerInputTypes.DATE,
@@ -126,19 +205,21 @@ export async function scheduleNotification(title: String, date: String, time: St
         if (grad == 0) {
             for (let i = 0; i < 9; i++) {
                 let d = moment(day).subtract(diffs[i]).toDate();
-                let id = await Notifications.scheduleNotificationAsync({
-                    content: {
-                        title: "LifeAlign",
-                        body: title + " is due in " + numbers[i] + " " + periods[i] + "!",
-                        sound: true,
-                        priority: Notifications.AndroidNotificationPriority.HIGH,
-                    },
-                    trigger: {
-                        type: Notifications.SchedulableTriggerInputTypes.DATE,
-                        date: d
-                    },
-                });
-                ids.push(id);
+                let now = new Date();
+                if (d > now) {
+                    let id = await Notifications.scheduleNotificationAsync({
+                        content: {
+                            title: "LifeAlign",
+                            body: title + " is due in " + numbers[i] + " " + periods[i] + "!",
+                            categoryIdentifier: "standard"
+                        },
+                        trigger: {
+                            type: Notifications.SchedulableTriggerInputTypes.DATE,
+                            date: d
+                        },
+                    });
+                    ids.push(id);
+                }
             }
         }
     }
@@ -148,7 +229,8 @@ export async function scheduleNotification(title: String, date: String, time: St
 
 //Cancels a task's notifications
 export async function cancelNotification(ids: string[]) {
-    ids.forEach((id) => {
-        Notifications.cancelScheduledNotificationAsync(id);
-    });
+    ids.forEach((id) =>
+        Notifications.cancelScheduledNotificationAsync(id)
+    );
 }
+

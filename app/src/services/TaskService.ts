@@ -39,6 +39,18 @@ export class TaskService {
     }
   }
 
+  // Get a single task by notification ID
+  static async getTaskByNotification(notifId: string): Promise<Task | null> {
+    try {
+      const tasks = await this.getAllTasks();
+      const task = tasks.find(task => task.notifId.includes(notifId));
+      return task || null;
+    } catch (error) {
+      console.error('Error getting task by notification:', error);
+      return null;
+    }
+  }
+
   // Add a new task
   static async addTask(task: Omit<Task, 'id'>): Promise<Task> {
     try {

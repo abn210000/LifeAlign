@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import {
   StyleSheet,
   Text,
@@ -8,38 +8,19 @@ import {
   Platform,
   KeyboardAvoidingView,
   TouchableOpacity,
-  ActivityIndicator,
-} from 'react-native';
+} from "react-native";
 import moment from 'moment';
 import { WheelPicker } from 'react-native-infinite-wheel-picker';
 import { useRouter } from 'expo-router';
 import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
-import { Feather } from '@expo/vector-icons';
-import { useLocalSearchParams } from 'expo-router';
 import { useTaskContext } from '../src/context/TaskContext';
-import { TaskService } from '../src/services/TaskService';
-import { categories } from '../src/config/categories';
-import { cancelNotification, scheduleNotification } from '../src/notifications';
+import { categories, getCategoryColor } from '../src/config/categories';
+import { scheduleNotification } from '../src/notifications';
 
-// Custom checkbox component to replace React Native Elements CheckBox
-const CustomCheckbox = ({ checked, onPress, label }: { checked: boolean; onPress: () => void; label: string }) => (
-  <TouchableOpacity 
-    style={styles.customCheckbox} 
-    onPress={onPress}
-  >
-    <View style={[
-      styles.checkbox,
-      checked && styles.checkboxChecked
-    ]}>
-      {checked && <Feather name="check" size={16} color="#fff" />}
-    </View>
-    <Text style={styles.checkboxLabel}>{label}</Text>
-  </TouchableOpacity>
-);
 
-const EditExistingTaskScreen = () => {
+
+const CreateNewTaskScreen = () => {
   const router = useRouter();
-  const [isLoading, setIsLoading] = useState(true);
 
   const [form, setForm] = useState({
     title: '',
@@ -48,104 +29,46 @@ const EditExistingTaskScreen = () => {
     time: new Date(),
     alertType: '',
     repeatNum: 0,
-    repeatPeriod: '-',
-    completed: false,
+    repeatPeriod: ''
   });
 
-  const [alertType, setAlertType] = useState(form?.alertType || 'none');
+  const [categoryOpen, setCategoryOpen] = useState(false);
+  const [categoryItems] = useState(categories);
 
   const numChoices = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
   const periods = ['-', 'Days', 'Weeks', 'Months', 'Years'];
 
-  const { updateTask, deleteTask } = useTaskContext();
-  const { taskId } = useLocalSearchParams();
-  const stringTaskId = Array.isArray(taskId) ? taskId[0] : taskId;
-
-  const getValidPeriodIndex = (period: string) => {
-    const index = periods.indexOf(period);
-    return index >= 0 ? index : 0;
-  };
-
-  useEffect(() => {
-    const loadTask = async () => {
-      try {
-        const task = await TaskService.getTask(stringTaskId);
-        if (task) {
-          const taskDate = moment(task.date).toDate();
-          const [hours, minutes] = task.time.split(':').map(Number);
-          const taskTime = new Date();
-          taskTime.setHours(hours, minutes);
-
-          const validRepeatPeriod = task.repeatPeriod && periods.includes(task.repeatPeriod) 
-            ? task.repeatPeriod 
-            : '-';
-
-          setForm({
-            title: task.title,
-            category: task.category || '',
-            date: taskDate,
-            time: taskTime,
-            alertType: task.alertType || '',
-            repeatNum: task.repeatNum || 0,
-            repeatPeriod: validRepeatPeriod,
-            completed: task.completed || false,
-          });
-          setAlertType(task.alertType || '');
-        }
-      } catch (error) {
-        console.error('Error loading task:', error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    loadTask();
-  }, [stringTaskId]);
+  const { addTask } = useTaskContext();
 
   const handleSubmit = async () => {
     try {
-      // Cancel old notifications and schedule new ones
-      const task = await TaskService.getTask(stringTaskId);
-      if (task?.notifId) {
-        await cancelNotification(task.notifId);
-      }
-
+      // Schedule notifications and get notification ids
       const ids = await scheduleNotification(
         form.title,
         moment(form.date).format('YYYY-MM-DD'),
         moment(form.time).format('HH:mm'),
-        alertType
+        form.alertType
       );
-
-      const updates = {
+      
+      const newTask = {
+        id: Date.now().toString(),
         title: form.title,
         category: form.category,
         date: moment(form.date).format('YYYY-MM-DD'),
         time: moment(form.time).format('HH:mm'),
-        alertType: alertType,
+        alertType: form.alertType,
         repeatNum: form.repeatNum,
         repeatPeriod: form.repeatPeriod,
-        completed: form.completed,
-        notifId: ids, // Store new notification IDs
+        completed: false,
+        notifId: ids,
+        createdAt: moment().toISOString(),
+        updatedAt: moment().toISOString()
       };
 
-      await updateTask(stringTaskId, updates);
+      await addTask(newTask);
       router.back();
     } catch (error) {
-      console.error('Error updating task:', error);
-    }
-  };
-
-  const handleDelete = async () => {
-    try {
-      const task = await TaskService.getTask(stringTaskId);
-      if (task?.notifId) {
-        await cancelNotification(task.notifId);
-      }
-      await deleteTask(stringTaskId);
-      router.back();
-    } catch (error) {
-      console.error('Error deleting task:', error);
+      console.error('Error creating task:', error);
     }
   };
 
@@ -159,31 +82,13 @@ const EditExistingTaskScreen = () => {
     setForm({ ...form, time: currentTime });
   };
 
-  const toggleCompletion = () => {
-    setForm((prevForm) => ({ ...prevForm, completed: !prevForm.completed }));
-  };
-
-  if (isLoading) {
-    return (
-      <View style={[styles.container, styles.centered]}>
-        <ActivityIndicator size="large" color="#0d522c" />
-      </View>
-    );
-  }
-
   return (
-    <KeyboardAvoidingView
+    <KeyboardAvoidingView 
       style={styles.container}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
       <SafeAreaView style={styles.safeArea}>
         <View style={styles.contentContainer}>
-          <CustomCheckbox
-            checked={form.completed}
-            onPress={toggleCompletion}
-            label="Mark as Complete"
-          />
-
           <TextInput
             style={styles.inputBox}
             placeholder="Title"
@@ -205,7 +110,9 @@ const EditExistingTaskScreen = () => {
                   ]}
                   onPress={() => setForm({ ...form, category: category.value })}
                 >
-                  <Text style={styles.categoryButtonText}>{category.label}</Text>
+                  <Text style={styles.categoryButtonText}>
+                    {category.label}
+                  </Text>
                 </TouchableOpacity>
               ))}
             </View>
@@ -239,19 +146,15 @@ const EditExistingTaskScreen = () => {
               <WheelPicker
                 data={numChoices}
                 selectedIndex={form.repeatNum}
-                onChangeValue={(val) => {
-                  setForm(prev => ({ ...prev, repeatNum: val }))
-                }}
+                onChangeValue={(val) => setForm({ ...form, repeatNum: val })}
                 infiniteScroll={false}
                 containerStyle={styles.wheelPicker}
                 restElements={1}
               />
               <WheelPicker
                 data={periods}
-                selectedIndex={getValidPeriodIndex(form.repeatPeriod)}
-                onChangeValue={(val) => {
-                  setForm(prev => ({ ...prev, repeatPeriod: periods[val] }));
-                }}
+                selectedIndex={0}
+                onChangeValue={(val) => setForm({ ...form, repeatPeriod: periods[val] })}
                 infiniteScroll={false}
                 containerStyle={styles.wheelPicker}
                 restElements={1}
@@ -271,9 +174,9 @@ const EditExistingTaskScreen = () => {
                   key={alert.value}
                   style={[
                     styles.alertButton,
-                    alertType === alert.value && styles.selectedAlert
+                    form.alertType === alert.value && styles.selectedAlert
                   ]}
-                  onPress={() => setAlertType(alert.value)}
+                  onPress={() => setForm({ ...form, alertType: alert.value })}
                 >
                   <Text style={styles.alertButtonText}>
                     {alert.label}
@@ -283,12 +186,11 @@ const EditExistingTaskScreen = () => {
             </View>
           </View>
 
-          <TouchableOpacity style={styles.deleteButton} onPress={handleDelete}>
-            <Feather name="trash-2" size={24} color="#fff" />
-          </TouchableOpacity>
-          
-          <TouchableOpacity style={styles.submitButton} onPress={handleSubmit}>
-            <Text style={styles.submitButtonText}>Save Changes</Text>
+          <TouchableOpacity 
+            style={styles.submitButton} 
+            onPress={handleSubmit}
+          >
+            <Text style={styles.submitButtonText}>Create Task</Text>
           </TouchableOpacity>
         </View>
       </SafeAreaView>
@@ -315,30 +217,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 20,
   },
-  customCheckbox: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    width: '90%',
+  checkBoxContainer: { 
+    width: '90%', 
+    backgroundColor: 'transparent', 
+    borderWidth: 0,
     marginBottom: 15,
-    padding: 8,
-  },
-  checkbox: {
-    width: 24,
-    height: 24,
-    borderRadius: 4,
-    borderWidth: 2,
-    borderColor: '#0d522c',
-    marginRight: 8,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: 'transparent',
-  },
-  checkboxChecked: {
-    backgroundColor: '#0d522c',
-  },
-  checkboxLabel: {
-    fontSize: 16,
-    color: '#6b917f',
+    padding: 0,
   },
   inputBox: {
     backgroundColor: '#fcfcfc',
@@ -349,6 +233,14 @@ const styles = StyleSheet.create({
     width: '90%',
     fontSize: 16,
     color: '#0d522c',
+    marginBottom: 15,
+  },
+  categoryContainer: {
+    backgroundColor: '#fcfcfc',
+    borderRadius: 10,
+    paddingHorizontal: 15,
+    paddingVertical: 10,
+    width: '90%',
     marginBottom: 15,
   },
   categoryButtonContainer: {
@@ -395,17 +287,21 @@ const styles = StyleSheet.create({
     backgroundColor: '#fcfcfc',
     borderRadius: 10,
     width: '90%',
-    padding: 10,
+    padding: 15,
     marginBottom: 15,
   },
   repeatLabel: { 
     fontSize: 16, 
     color: '#6b917f', 
-    marginBottom: 3
+    marginBottom: 10 
   },
   repeatBox: { 
     flexDirection: 'row', 
     justifyContent: 'space-around' 
+  },
+  switchLabel: { 
+    fontSize: 16, 
+    color: '#6b917f' 
   },
   alertButtonContainer: {
     flexDirection: 'row',
@@ -432,7 +328,7 @@ const styles = StyleSheet.create({
   },
   wheelPicker: {
     flex: 1,
-    height: 100,
+    height: 150,
   },
   deleteButton: {
     backgroundColor: '#ff4d4d',
@@ -457,4 +353,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default EditExistingTaskScreen;
+export default CreateNewTaskScreen;
