@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   StyleSheet,
   Text,
@@ -11,38 +11,65 @@ import {
 } from "react-native";
 import moment from 'moment';
 import { WheelPicker } from 'react-native-infinite-wheel-picker';
-import { useRouter } from 'expo-router';
+import { useRouter, useLocalSearchParams } from 'expo-router';
 import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
 import { useTaskContext } from '../src/context/TaskContext';
-import { categories, getCategoryColor } from '../src/config/categories';
-import { scheduleNotification } from '../src/notifications';
+import { categories } from '../src/config/categories';
+import { scheduleNotification, cancelNotification } from '../src/notifications';
+import { Feather } from '@expo/vector-icons';
 
+const numChoices = Array.from({ length: 31 }, (_, i) => i.toString());
+const periods = ['Days', 'Weeks', 'Months', 'Years'];
 
-
-const CreateNewTaskScreen = () => {
+const EditExistingTaskScreen = () => {
   const router = useRouter();
+  const { taskId } = useLocalSearchParams();
+  const { updateTask, deleteTask, tasks } = useTaskContext();
 
   const [form, setForm] = useState({
+    id: '',
     title: '',
     category: '',
     date: new Date(),
     time: new Date(),
     alertType: '',
     repeatNum: 0,
-    repeatPeriod: ''
+    repeatPeriod: '',
+    completed: false,
+    notifId: ['']
   });
 
-  const [categoryOpen, setCategoryOpen] = useState(false);
-  const [categoryItems] = useState(categories);
-
-  const numChoices = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
-  const periods = ['-', 'Days', 'Weeks', 'Months', 'Years'];
-
-  const { addTask } = useTaskContext();
+  // Load existing task data
+  useEffect(() => {
+    const task = tasks.find(t => t.id === taskId);
+    if (task) {
+      setForm({
+        id: task.id,
+        title: task.title || '',
+        category: task.category || '',
+        date: moment(task.date).toDate(),
+        time: moment(task.time, 'HH:mm').toDate(),
+        alertType: task.alertType || '',
+        repeatNum: task.repeatNum || 0,
+        repeatPeriod: task.repeatPeriod || '',
+        completed: task.completed || false,
+        notifId: task.notifId || [''],
+      });
+    } else {
+      // Handle case where task is not found
+      console.warn('Task not found');
+      router.back(); // Optionally navigate back
+    }
+  }, [taskId, tasks]);
 
   const handleSubmit = async () => {
     try {
-      // Schedule notifications and get notification ids
+      // Cancel existing notifications
+      if (form.notifId) {
+        await cancelNotification(form.notifId);
+      }
+
+      // Schedule new notifications
       const ids = await scheduleNotification(
         form.title,
         moment(form.date).format('YYYY-MM-DD'),
@@ -50,8 +77,7 @@ const CreateNewTaskScreen = () => {
         form.alertType
       );
       
-      const newTask = {
-        id: Date.now().toString(),
+      const updatedTask = {
         title: form.title,
         category: form.category,
         date: moment(form.date).format('YYYY-MM-DD'),
@@ -59,16 +85,40 @@ const CreateNewTaskScreen = () => {
         alertType: form.alertType,
         repeatNum: form.repeatNum,
         repeatPeriod: form.repeatPeriod,
-        completed: false,
+        completed: form.completed,
         notifId: ids,
-        createdAt: moment().toISOString(),
         updatedAt: moment().toISOString()
       };
 
-      await addTask(newTask);
+      await updateTask(taskId as string, updatedTask);
       router.back();
     } catch (error) {
-      console.error('Error creating task:', error);
+      console.error('Error updating task:', error);
+    }
+  };
+
+  const handleDelete = async () => {
+    try {
+      if (form.notifId) {
+        await cancelNotification(form.notifId);
+      }
+      await deleteTask(taskId as string);
+      router.back();
+    } catch (error) {
+      console.error('Error deleting task:', error);
+    }
+  };
+
+  const toggleComplete = async () => {
+    try {
+      const updatedTask = {
+        ...form,
+        completed: !form.completed
+      };
+      setForm(updatedTask);
+      await updateTask(taskId as string, { completed: !form.completed });
+    } catch (error) {
+      console.error('Error toggling completion:', error);
     }
   };
 
@@ -89,6 +139,32 @@ const CreateNewTaskScreen = () => {
     >
       <SafeAreaView style={styles.safeArea}>
         <View style={styles.contentContainer}>
+          <View style={styles.headerButtons}>
+            <TouchableOpacity 
+              style={[styles.completeButton, form.completed && styles.completedButton]} 
+              onPress={toggleComplete}
+            >
+              <Feather 
+                name={form.completed ? "check-circle" : "circle"} 
+                size={24} 
+                color={form.completed ? "#ffffff" : "#6b917f"} 
+              />
+              <Text style={[
+                styles.completeButtonText,
+                form.completed && styles.completedButtonText
+              ]}>
+                {form.completed ? 'Completed' : 'Mark Complete'}
+              </Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity 
+              style={styles.deleteButton}
+              onPress={handleDelete}
+            >
+              <Feather name="trash-2" size={24} color="#ffffff" />
+            </TouchableOpacity>
+          </View>
+
           <TextInput
             style={styles.inputBox}
             placeholder="Title"
@@ -190,7 +266,7 @@ const CreateNewTaskScreen = () => {
             style={styles.submitButton} 
             onPress={handleSubmit}
           >
-            <Text style={styles.submitButtonText}>Create Task</Text>
+            <Text style={styles.submitButtonText}>Save Changes</Text>
           </TouchableOpacity>
         </View>
       </SafeAreaView>
@@ -330,15 +406,6 @@ const styles = StyleSheet.create({
     flex: 1,
     height: 150,
   },
-  deleteButton: {
-    backgroundColor: '#ff4d4d',
-    borderRadius: 50,
-    width: 50,
-    height: 50,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 15,
-  },
   submitButton: {
     backgroundColor: '#77bba2',
     padding: 15,
@@ -351,6 +418,76 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: 'bold',
   },
+  headerButtons: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    width: '90%',
+    marginBottom: 20,
+  },
+  completeButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#fcfcfc',
+    paddingVertical: 10,
+    paddingHorizontal: 15,
+    borderRadius: 10,
+    gap: 8,
+    borderWidth: 2,
+    borderColor: '#77bba2',
+  },
+  completedButton: {
+    backgroundColor: '#77bba2',
+    borderColor: '#0d522c',
+  },
+  completeButtonText: {
+    color: '#6b917f',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  completedButtonText: {
+    color: '#ffffff',
+  },
+  deleteButton: {
+    backgroundColor: '#ff4d4d',
+    padding: 12,
+    borderRadius: 10,
+    width: 48,
+    height: 48,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
 });
 
-export default CreateNewTaskScreen;
+const newStyles = StyleSheet.create({
+  headerButtons: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    width: '90%',
+    marginBottom: 20,
+  },
+  completeButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#fcfcfc',
+    padding: 10,
+    borderRadius: 10,
+    gap: 8,
+  },
+  completedButton: {
+    backgroundColor: '#77bba2',
+  },
+  completeButtonText: {
+    color: '#0d522c',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  deleteButton: {
+    backgroundColor: '#ff4d4d',
+    padding: 10,
+    borderRadius: 10,
+  },
+});
+
+export default EditExistingTaskScreen;
