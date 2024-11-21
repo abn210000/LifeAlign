@@ -42,6 +42,16 @@ export default function HomeScreen() {
     };
   };
 
+  // Add this after the getCategoryDetails function
+  const handlePushToTomorrow = async (task: Task) => {
+    const tomorrow = moment(task.date).add(1, 'day').format('YYYY-MM-DD');
+    try {
+      await updateTask(task.id, { date: tomorrow });
+    } catch (error) {
+      console.error('Error pushing task to tomorrow:', error);
+    }
+  };
+
   // Task item component
   const TaskItem = ({ task }: { task: Task }) => {
     const categoryDetails = getCategoryDetails(task.category);
@@ -83,7 +93,18 @@ export default function HomeScreen() {
             </View>
           </View>
         </View>
-        <Text style={styles.taskTime}>{formattedTime}</Text>
+        <View style={styles.taskRightContent}>
+          <Text style={styles.taskTime}>{formattedTime}</Text>
+          <TouchableOpacity
+            style={styles.tomorrowButton}
+            onPress={(e) => {
+              e.stopPropagation();
+              handlePushToTomorrow(task);
+            }}
+          >
+            <Feather name="clock" size={16} color="#ffffff" />
+          </TouchableOpacity>
+        </View>
       </TouchableOpacity>
     );
   };
@@ -257,9 +278,7 @@ const styles = StyleSheet.create({
   },
   taskTime: {
     fontSize: 14,
-    color: '#0d522c',
-    fontWeight: '500',
-    marginLeft: 8,
+    color: '#666',
   },
   noTasksContainer: {
     flex: 1,
@@ -314,5 +333,19 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: 'bold',
     marginLeft: 8,
+  },
+  taskRightContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  tomorrowButton: {
+    backgroundColor: '#77bba2',
+    padding: 6,
+    borderRadius: 5,
+    justifyContent: 'center',
+    alignItems: 'center',
+    width: 28,
+    height: 28,
   },
 });
