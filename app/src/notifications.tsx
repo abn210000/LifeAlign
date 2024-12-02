@@ -73,25 +73,16 @@ export default function Notification() {
     const responseListener = useRef<Notifications.EventSubscription>();
 
     useEffect(() => {
-        registerForPushNotificationsAsync().then(token => token && setExpoPushToken(token));
-
-        if (Platform.OS === 'android') {
-            Notifications.getNotificationChannelsAsync().then(value => setChannels(value ?? []));
+        async function setupNotifications() {
+            const token = await registerForPushNotificationsAsync();
+            if (!token) {
+                console.error('Failed to get push notification token');
+                return;
+            }
+            console.log('Push notification token:', token);
         }
-        notificationListener.current = Notifications.addNotificationReceivedListener(notification => {
-            setNotification(notification);
-        });
-
-        responseListener.current = Notifications.addNotificationResponseReceivedListener(response => {
-            console.log(response);
-        });
-
-        return () => {
-            notificationListener.current &&
-                Notifications.removeNotificationSubscription(notificationListener.current);
-            responseListener.current &&
-                Notifications.removeNotificationSubscription(responseListener.current);
-        };
+        
+        setupNotifications();
     }, []);
 }
 
@@ -242,5 +233,31 @@ export async function cancelNotification(ids: string[]) {
     ids.forEach((id) =>
         Notifications.cancelScheduledNotificationAsync(id)
     );
+}
+
+export async function sendTestNotification() {
+  try {
+    const now = new Date();
+    const testDate = new Date(now.getTime() + 10000); // 10 seconds from now
+    
+    const id = await Notifications.scheduleNotificationAsync({
+      content: {
+        title: "Test Notification",
+        body: "This is a test notification",
+        sound: true,
+        priority: Notifications.AndroidNotificationPriority.HIGH,
+      },
+      trigger: {
+        type: Notifications.SchedulableTriggerInputTypes.DATE,
+        date: testDate,
+      },
+    });
+    
+    console.log('Test notification scheduled with ID:', id);
+    return true;
+  } catch (error) {
+    console.error('Error sending test notification:', error);
+    return false;
+  }
 }
 
