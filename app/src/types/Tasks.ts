@@ -9,6 +9,7 @@ export interface Task {
   repeatNum?: number;
   repeatPeriod?: string;
   notifId: string[];
+  deletedAt?: string;
 }
 
 export type NewTask = Omit<Task, 'id'>;

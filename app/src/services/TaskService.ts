@@ -3,6 +3,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Task } from '../types/Tasks';
 
 const TASKS_STORAGE_KEY = '@life_align_tasks';
+const DELETED_TASKS_STORAGE_KEY = '@life_align_deleted_tasks';
 
 // Task service class
 export class TaskService {
@@ -123,6 +124,10 @@ export class TaskService {
   static async deleteTask(taskId: string): Promise<void> {
     try {
       const tasks = await this.getAllTasks();
+      const taskToDelete = tasks.find(task => task.id === taskId);
+      if (taskToDelete) {
+        await this.addToDeletedTasks(taskToDelete);
+      }
       const filteredTasks = tasks.filter(task => task.id !== taskId);
       await AsyncStorage.setItem(TASKS_STORAGE_KEY, JSON.stringify(filteredTasks));
     } catch (error) {
@@ -145,6 +150,29 @@ export class TaskService {
     } catch (error) {
       console.error('Error getting dates with tasks:', error);
       return {};
+    }
+  }
+
+  static async addToDeletedTasks(task: Task): Promise<void> {
+    try {
+      const deletedTasks = await this.getDeletedTasks();
+      deletedTasks.push({
+        ...task,
+        deletedAt: new Date().toISOString()
+      });
+      await AsyncStorage.setItem(DELETED_TASKS_STORAGE_KEY, JSON.stringify(deletedTasks));
+    } catch (error) {
+      console.error('Error adding to deleted tasks:', error);
+    }
+  }
+
+  static async getDeletedTasks(): Promise<Task[]> {
+    try {
+      const tasksJson = await AsyncStorage.getItem(DELETED_TASKS_STORAGE_KEY);
+      return tasksJson ? JSON.parse(tasksJson) : [];
+    } catch (error) {
+      console.error('Error getting deleted tasks:', error);
+      return [];
     }
   }
 }

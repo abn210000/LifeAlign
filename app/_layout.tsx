@@ -93,6 +93,19 @@ function Layout() {
           },
         }} 
       />
+      <Stack.Screen 
+        name="Screens/TaskHistoryScreen" 
+        options={{
+          title: 'Task History',
+          headerStyle: {
+            backgroundColor: '#93c4af',
+          },
+          headerTintColor: '#0d522c',
+          headerTitleStyle: {
+            fontWeight: 'bold',
+          },
+        }} 
+      />
     </Stack>
   );
 }

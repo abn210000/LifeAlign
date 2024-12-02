@@ -7,6 +7,7 @@ import moment from 'moment';
 // Task context type
 interface TaskContextType {
   tasks: Task[];
+  allTasks: Task[];
   selectedDate: string;
   isLoading: boolean;
   setSelectedDate: (date: string) => void;
@@ -23,6 +24,7 @@ const TaskContext = createContext<TaskContextType | undefined>(undefined);
 // Task provider component
 export const TaskProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [tasks, setTasks] = useState<Task[]>([]);
+  const [allTasks, setAllTasks] = useState<Task[]>([]);
   const [selectedDate, setSelectedDate] = useState(moment().format('YYYY-MM-DD'));
   const [isLoading, setIsLoading] = useState(true);
   const [markedDates, setMarkedDates] = useState<{ [date: string]: { marked: boolean } }>({});
@@ -31,14 +33,17 @@ export const TaskProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const refreshTasks = async () => {
     try {
       setIsLoading(true);
-      const allTasks = await TaskService.getAllTasks();
-      const tasksForDate = allTasks.filter(task => 
+      const fetchedTasks = await TaskService.getAllTasks();
+      setAllTasks(fetchedTasks);
+      
+      // Filter tasks for selected date only for the main task list
+      const tasksForDate = fetchedTasks.filter(task => 
         moment(task.date).format('YYYY-MM-DD') === selectedDate
       );
       setTasks(tasksForDate);
       
       // Update marked dates
-      const dates = allTasks.reduce((acc, task) => {
+      const dates = fetchedTasks.reduce((acc, task) => {
         const date = moment(task.date).format('YYYY-MM-DD');
         acc[date] = { marked: true };
         return acc;
@@ -99,6 +104,7 @@ export const TaskProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     <TaskContext.Provider
       value={{
         tasks,
+        allTasks,
         selectedDate,
         isLoading,
         setSelectedDate,

@@ -177,7 +177,7 @@ export default function HomeScreen() {
         
         <TouchableOpacity 
           style={[styles.button, styles.historyButton]} 
-          onPress={() => console.log('Task History')}
+          onPress={() => router.push('/Screens/TaskHistoryScreen')}
         >
           <Ionicons name="time-outline" size={28} color="#ffffff" />
         </TouchableOpacity>
