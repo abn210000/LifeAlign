@@ -8,6 +8,7 @@ import {
   Platform,
   KeyboardAvoidingView,
   TouchableOpacity,
+  Alert,
 } from "react-native";
 import moment from 'moment';
 import { WheelPicker } from 'react-native-infinite-wheel-picker';
@@ -64,7 +65,48 @@ const EditExistingTaskScreen = () => {
     }
   }, [taskId, tasks]);
 
+  const checkTimeConflict = (startTime: Date, endTime: Date) => {
+    return tasks.some(task => {
+      if (task.id === form.id) return false; // Skip the current task
+      const taskStart = moment(task.startTime, 'HH:mm');
+      const taskEnd = moment(task.endTime, 'HH:mm');
+      return (
+        (moment(startTime).isBetween(taskStart, taskEnd, null, '[)') ||
+        moment(endTime).isBetween(taskStart, taskEnd, null, '(]')) ||
+        (moment(taskStart).isBetween(startTime, endTime, null, '[)') ||
+        moment(taskEnd).isBetween(startTime, endTime, null, '(]'))
+      );
+    });
+  };
+
   const handleSubmit = async () => {
+    // Check if end time is before start time
+    if (moment(form.endTime).isBefore(moment(form.startTime))) {
+        Alert.alert(
+            "Invalid Time Range",
+            "End time cannot be before start time. Please adjust the times.",
+            [{ text: "OK" }]
+        );
+        return;
+    }
+
+    const hasConflict = checkTimeConflict(form.startTime, form.endTime);
+
+    if (hasConflict) {
+        Alert.alert(
+            "Time Conflict",
+            "There is an existing task at this time, are you sure you would like to proceed?",
+            [
+                { text: "Cancel", style: "cancel" },
+                { text: "OK", onPress: () => updateTaskDetails() }
+            ]
+        );
+    } else {
+        updateTaskDetails();
+    }
+  };
+
+  const updateTaskDetails = async () => {
     try {
       // Cancel existing notifications
       if (form.notifId) {
@@ -93,7 +135,7 @@ const EditExistingTaskScreen = () => {
         updatedAt: moment().toISOString()
       };
 
-      await updateTask(taskId as string, updatedTask);
+      await updateTask(form.id, updatedTask);
       router.back();
     } catch (error) {
       console.error('Error updating task:', error);

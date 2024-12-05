@@ -56,7 +56,7 @@ export default function HomeScreen() {
       const ids = await scheduleNotification(
         task.title,
         tomorrow,
-        task.time,
+        task.startTime,
         task.alertType || ''
       );
  

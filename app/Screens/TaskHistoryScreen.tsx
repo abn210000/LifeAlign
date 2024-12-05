@@ -21,8 +21,8 @@ export default function TaskHistoryScreen() {
   const completedTasks = allTasks
     .filter(task => task.completed)
     .sort((a, b) => {
-      const dateA = moment(`${a.date} ${a.time}`);
-      const dateB = moment(`${b.date} ${b.time}`);
+      const dateA = moment(`${a.date} ${a.startTime}`);
+      const dateB = moment(`${b.date} ${b.startTime}`);
       return sortOrder === 'desc' 
         ? dateB.valueOf() - dateA.valueOf()
         : dateA.valueOf() - dateB.valueOf();
@@ -43,7 +43,8 @@ export default function TaskHistoryScreen() {
   const renderTaskItem = ({ item }: { item: Task }) => {
     const categoryDetails = getCategoryDetails(item.category);
     const taskDate = moment(item.date).format('MMM D, YYYY');
-    const taskTime = moment(item.time, 'HH:mm').format('h:mm A');
+    const formattedStartTime = moment(item.startTime, 'HH:mm').format('h:mm A');
+    const formattedEndTime = moment(item.endTime, 'HH:mm').format('h:mm A');
 
     return (
       <View style={styles.taskItem}>
@@ -58,7 +59,9 @@ export default function TaskHistoryScreen() {
             <View style={[styles.categoryBox, { backgroundColor: categoryDetails.color }]}>
               <Text style={styles.categoryText}>{categoryDetails.label}</Text>
             </View>
-            <Text style={styles.dateTimeText}>Completed on {taskDate} at {taskTime}</Text>
+            <Text style={styles.dateTimeText}>
+              Completed on {taskDate} from {formattedStartTime} to {formattedEndTime}
+            </Text>
           </View>
         </View>
       </View>

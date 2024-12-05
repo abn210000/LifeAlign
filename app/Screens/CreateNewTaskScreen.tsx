@@ -8,6 +8,7 @@ import {
   Platform,
   KeyboardAvoidingView,
   TouchableOpacity,
+  Alert,
 } from "react-native";
 import moment from 'moment';
 import { WheelPicker } from 'react-native-infinite-wheel-picker';
@@ -39,9 +40,49 @@ const CreateNewTaskScreen = () => {
   const numChoices = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
   const periods = ['-', 'Days', 'Weeks', 'Months', 'Years'];
 
-  const { addTask } = useTaskContext();
+  const { addTask, tasks } = useTaskContext();
+
+  const checkTimeConflict = (startTime: Date, endTime: Date) => {
+    return tasks.some(task => {
+      const taskStart = moment(task.startTime, 'HH:mm');
+      const taskEnd = moment(task.endTime, 'HH:mm');
+      return (
+        (moment(startTime).isBetween(taskStart, taskEnd, null, '[)') ||
+        moment(endTime).isBetween(taskStart, taskEnd, null, '(]')) ||
+        (moment(taskStart).isBetween(startTime, endTime, null, '[)') ||
+        moment(taskEnd).isBetween(startTime, endTime, null, '(]'))
+      );
+    });
+  };
 
   const handleSubmit = async () => {
+    // Check if end time is before start time
+    if (moment(form.endTime).isBefore(moment(form.startTime))) {
+        Alert.alert(
+            "Invalid Time Range",
+            "End time cannot be before start time. Please adjust the times.",
+            [{ text: "OK" }]
+        );
+        return;
+    }
+
+    const hasConflict = checkTimeConflict(form.startTime, form.endTime);
+
+    if (hasConflict) {
+        Alert.alert(
+            "Time Conflict",
+            "There is an existing task at this time, are you sure you would like to proceed?",
+            [
+                { text: "Cancel", style: "cancel" },
+                { text: "OK", onPress: () => scheduleTask() }
+            ]
+        );
+    } else {
+        scheduleTask();
+    }
+  };
+
+  const scheduleTask = async () => {
     try {
       // Schedule notifications and get notification ids
       const ids = await scheduleNotification(
