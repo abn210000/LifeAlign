@@ -55,10 +55,11 @@ export default function HomeScreen() {
   // Task item component
   const TaskItem = ({ task }: { task: Task }) => {
     const categoryDetails = getCategoryDetails(task.category);
-    const isLate = moment(`${task.date} ${task.time}`).isBefore(moment()) && !task.completed;
+    const isLate = moment(`${task.date} ${task.startTime}`).isBefore(moment()) && !task.completed;
     
-    // Format time to 12-hour format
-    const formattedTime = moment(task.time, 'HH:mm').format('h:mm A');
+    // Format start and end times to 12-hour format
+    const formattedStartTime = moment(task.startTime, 'HH:mm').format('h:mm A');
+    const formattedEndTime = moment(task.endTime, 'HH:mm').format('h:mm A');
     
     return (
       <TouchableOpacity 
@@ -94,7 +95,9 @@ export default function HomeScreen() {
           </View>
         </View>
         <View style={styles.taskRightContent}>
-          <Text style={styles.taskTime}>{formattedTime}</Text>
+          <Text style={styles.taskTime}>
+            {formattedStartTime} - {formattedEndTime}
+          </Text>
           <TouchableOpacity
             style={styles.tomorrowButton}
             onPress={(e) => {

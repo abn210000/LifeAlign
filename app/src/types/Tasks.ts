@@ -3,7 +3,8 @@ export interface Task {
   title: string;
   category: string;
   date: string;
-  time: string;
+  startTime: string;
+  endTime: string;
   completed: boolean;
   alertType?: string;
   repeatNum?: number;

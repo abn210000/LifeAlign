@@ -26,7 +26,8 @@ const CreateNewTaskScreen = () => {
     title: '',
     category: '',
     date: new Date(),
-    time: new Date(),
+    startTime: new Date(),
+    endTime: new Date(),
     alertType: '',
     repeatNum: 0,
     repeatPeriod: ''
@@ -46,7 +47,7 @@ const CreateNewTaskScreen = () => {
       const ids = await scheduleNotification(
         form.title,
         moment(form.date).format('YYYY-MM-DD'),
-        moment(form.time).format('HH:mm'),
+        moment(form.startTime).format('HH:mm'),
         form.alertType
       );
       
@@ -55,7 +56,8 @@ const CreateNewTaskScreen = () => {
         title: form.title,
         category: form.category,
         date: moment(form.date).format('YYYY-MM-DD'),
-        time: moment(form.time).format('HH:mm'),
+        startTime: moment(form.startTime).format('HH:mm'),
+        endTime: moment(form.endTime).format('HH:mm'),
         alertType: form.alertType,
         repeatNum: form.repeatNum,
         repeatPeriod: form.repeatPeriod,
@@ -77,9 +79,14 @@ const CreateNewTaskScreen = () => {
     setForm({ ...form, date: currentDate });
   };
 
-  const handleTimeChange = (event: DateTimePickerEvent, selectedTime?: Date) => {
-    const currentTime = selectedTime || form.time;
-    setForm({ ...form, time: currentTime });
+  const handleStartTimeChange = (event: DateTimePickerEvent, selectedTime?: Date) => {
+    const currentTime = selectedTime || form.startTime;
+    setForm({ ...form, startTime: currentTime });
+  };
+
+  const handleEndTimeChange = (event: DateTimePickerEvent, selectedTime?: Date) => {
+    const currentTime = selectedTime || form.endTime;
+    setForm({ ...form, endTime: currentTime });
   };
 
   return (
@@ -124,18 +131,29 @@ const CreateNewTaskScreen = () => {
               mode="date"
               display="default"
               value={form.date}
-              onChange={handleDateChange}
+              onChange={(event, selectedDate) => setForm({ ...form, date: selectedDate || form.date })}
               style={styles.dateTimePicker}
             />
           </View>
 
           <View style={styles.dateTimeBox}>
-            <Text style={styles.labelText}>Time</Text>
+            <Text style={styles.labelText}>Start Time</Text>
             <DateTimePicker
               mode="time"
               display="default"
-              value={form.time}
-              onChange={handleTimeChange}
+              value={form.startTime}
+              onChange={handleStartTimeChange}
+              style={styles.dateTimePicker}
+            />
+          </View>
+
+          <View style={styles.dateTimeBox}>
+            <Text style={styles.labelText}>End Time</Text>
+            <DateTimePicker
+              mode="time"
+              display="default"
+              value={form.endTime}
+              onChange={handleEndTimeChange}
               style={styles.dateTimePicker}
             />
           </View>

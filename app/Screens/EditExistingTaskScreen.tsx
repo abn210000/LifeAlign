@@ -31,7 +31,8 @@ const EditExistingTaskScreen = () => {
     title: '',
     category: '',
     date: new Date(),
-    time: new Date(),
+    startTime: new Date(),
+    endTime: new Date(),
     alertType: '',
     repeatNum: 0,
     repeatPeriod: '',
@@ -48,7 +49,8 @@ const EditExistingTaskScreen = () => {
         title: task.title || '',
         category: task.category || '',
         date: moment(task.date).toDate(),
-        time: moment(task.time, 'HH:mm').toDate(),
+        startTime: moment(task.startTime, 'HH:mm').toDate(),
+        endTime: moment(task.endTime, 'HH:mm').toDate(),
         alertType: task.alertType || '',
         repeatNum: task.repeatNum || 0,
         repeatPeriod: task.repeatPeriod || '',
@@ -73,7 +75,7 @@ const EditExistingTaskScreen = () => {
       const ids = await scheduleNotification(
         form.title,
         moment(form.date).format('YYYY-MM-DD'),
-        moment(form.time).format('HH:mm'),
+        moment(form.startTime).format('HH:mm'),
         form.alertType
       );
       
@@ -81,7 +83,8 @@ const EditExistingTaskScreen = () => {
         title: form.title,
         category: form.category,
         date: moment(form.date).format('YYYY-MM-DD'),
-        time: moment(form.time).format('HH:mm'),
+        startTime: moment(form.startTime).format('HH:mm'),
+        endTime: moment(form.endTime).format('HH:mm'),
         alertType: form.alertType,
         repeatNum: form.repeatNum,
         repeatPeriod: form.repeatPeriod,
@@ -127,9 +130,14 @@ const EditExistingTaskScreen = () => {
     setForm({ ...form, date: currentDate });
   };
 
-  const handleTimeChange = (event: DateTimePickerEvent, selectedTime?: Date) => {
-    const currentTime = selectedTime || form.time;
-    setForm({ ...form, time: currentTime });
+  const handleStartTimeChange = (event: DateTimePickerEvent, selectedTime?: Date) => {
+    const currentTime = selectedTime || form.startTime;
+    setForm({ ...form, startTime: currentTime });
+  };
+
+  const handleEndTimeChange = (event: DateTimePickerEvent, selectedTime?: Date) => {
+    const currentTime = selectedTime || form.endTime;
+    setForm({ ...form, endTime: currentTime });
   };
 
   return (
@@ -206,12 +214,23 @@ const EditExistingTaskScreen = () => {
           </View>
 
           <View style={styles.dateTimeBox}>
-            <Text style={styles.labelText}>Time</Text>
+            <Text style={styles.labelText}>Start Time</Text>
             <DateTimePicker
               mode="time"
               display="default"
-              value={form.time}
-              onChange={handleTimeChange}
+              value={form.startTime}
+              onChange={handleStartTimeChange}
+              style={styles.dateTimePicker}
+            />
+          </View>
+
+          <View style={styles.dateTimeBox}>
+            <Text style={styles.labelText}>End Time</Text>
+            <DateTimePicker
+              mode="time"
+              display="default"
+              value={form.endTime}
+              onChange={handleEndTimeChange}
               style={styles.dateTimePicker}
             />
           </View>
@@ -363,8 +382,8 @@ const styles = StyleSheet.create({
     backgroundColor: '#fcfcfc',
     borderRadius: 10,
     width: '90%',
-    padding: 15,
-    marginBottom: 15,
+    padding: 10,
+    marginBottom: 10,
   },
   repeatLabel: { 
     fontSize: 16, 
@@ -373,7 +392,8 @@ const styles = StyleSheet.create({
   },
   repeatBox: { 
     flexDirection: 'row', 
-    justifyContent: 'space-around' 
+    justifyContent: 'space-around', 
+    height: 100 
   },
   switchLabel: { 
     fontSize: 16, 
@@ -404,7 +424,7 @@ const styles = StyleSheet.create({
   },
   wheelPicker: {
     flex: 1,
-    height: 150,
+    height: 80,
   },
   submitButton: {
     backgroundColor: '#77bba2',

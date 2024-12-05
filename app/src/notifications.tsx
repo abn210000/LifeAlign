@@ -142,7 +142,7 @@ Notifications.addNotificationResponseReceivedListener((response) => {
                     newNotifIds = await scheduleNotification(
                         task.title,
                         newDate,
-                        task.time,
+                        task.startTime,
                         task.alertType
                     );
                 }
