@@ -18,8 +18,8 @@ import { categories } from '../src/config/categories';
 import { scheduleNotification, cancelNotification } from '../src/notifications';
 import { Feather } from '@expo/vector-icons';
 
-const numChoices = Array.from({ length: 31 }, (_, i) => i.toString());
-const periods = ['Days', 'Weeks', 'Months', 'Years'];
+const numChoices = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
+const periods = ['-', 'Days', 'Weeks', 'Months', 'Years'];
 
 const EditExistingTaskScreen = () => {
   const router = useRouter();

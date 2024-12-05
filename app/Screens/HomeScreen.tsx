@@ -9,6 +9,8 @@ import { useTaskContext } from '../src/context/TaskContext';
 import { Task } from '../src/types/Tasks';
 import { categories, getCategoryColor } from '../src/config/categories';
 import moment from 'moment';
+import { cancelNotification } from '../src/notifications';
+import { scheduleNotification } from '../src/notifications';
 
 // Home screen component
 export default function HomeScreen() {
@@ -42,11 +44,23 @@ export default function HomeScreen() {
     };
   };
 
-  // Add this after the getCategoryDetails function
   const handlePushToTomorrow = async (task: Task) => {
     const tomorrow = moment(task.date).add(1, 'day').format('YYYY-MM-DD');
     try {
-      await updateTask(task.id, { date: tomorrow });
+      // Cancel existing notifications
+      if (task.notifId) {
+        await cancelNotification(task.notifId);
+      }
+ 
+      // Schedule new notifications
+      const ids = await scheduleNotification(
+        task.title,
+        tomorrow,
+        task.time,
+        task.alertType || ''
+      );
+ 
+      await updateTask(task.id, { date: tomorrow, notifId: ids });
     } catch (error) {
       console.error('Error pushing task to tomorrow:', error);
     }
