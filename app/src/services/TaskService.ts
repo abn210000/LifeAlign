@@ -96,6 +96,17 @@ export class TaskService {
     }
   }
 
+  // Set entire task list
+  static async setTasks(tasks: Task[]): Promise<void> {
+    try {
+      await AsyncStorage.setItem(TASKS_STORAGE_KEY, JSON.stringify(tasks));
+    } catch (error) {
+      console.error('Error adding task:', error);
+      throw error;
+    }
+  }
+
+
   // Update a task
   static async updateTask(taskId: string, updates: Partial<Task>): Promise<Task> {
     try {
