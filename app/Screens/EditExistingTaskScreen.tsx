@@ -41,6 +41,22 @@ const EditExistingTaskScreen = () => {
     notifId: ['']
   });
 
+  const [mode, setMode] = useState('date');
+  const [showDateTimePicker, setShowDateTimePicker] = useState(false);
+  
+  const showMode = (currentMode) => {
+    setShowDateTimePicker(true);
+    setMode(currentMode);
+  };
+
+  const showDatepicker = () => {
+    showMode('date');
+  };
+
+  const showTimepicker = () => {
+    showMode('time');
+  };
+
   // Load existing task data
   useEffect(() => {
     const task = tasks.find(t => t.id === taskId);
@@ -64,7 +80,6 @@ const EditExistingTaskScreen = () => {
       router.back(); // Optionally navigate back
     }
   }, [taskId, tasks]);
-
   const checkTimeConflict = (startTime: Date, endTime: Date) => {
     return tasks.some(task => {
       if (task.id === form.id) return false; // Skip the current task
@@ -78,7 +93,7 @@ const EditExistingTaskScreen = () => {
       );
     });
   };
-
+  
   const handleSubmit = async () => {
     // Check if end time is before start time
     if (moment(form.endTime).isBefore(moment(form.startTime))) {
@@ -120,7 +135,7 @@ const EditExistingTaskScreen = () => {
         moment(form.startTime).format('HH:mm'),
         form.alertType
       );
-      
+
       const updatedTask = {
         title: form.title,
         category: form.category,
@@ -170,34 +185,37 @@ const EditExistingTaskScreen = () => {
   const handleDateChange = (event: DateTimePickerEvent, selectedDate?: Date) => {
     const currentDate = selectedDate || form.date;
     setForm({ ...form, date: currentDate });
+    setShowDateTimePicker(false);
   };
 
   const handleStartTimeChange = (event: DateTimePickerEvent, selectedTime?: Date) => {
     const currentTime = selectedTime || form.startTime;
     setForm({ ...form, startTime: currentTime });
+    setShowDateTimePicker(false);
   };
 
   const handleEndTimeChange = (event: DateTimePickerEvent, selectedTime?: Date) => {
     const currentTime = selectedTime || form.endTime;
     setForm({ ...form, endTime: currentTime });
+    setShowDateTimePicker(false);
   };
 
   return (
-    <KeyboardAvoidingView 
+    <KeyboardAvoidingView
       style={styles.container}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
       <SafeAreaView style={styles.safeArea}>
         <View style={styles.contentContainer}>
           <View style={styles.headerButtons}>
-            <TouchableOpacity 
-              style={[styles.completeButton, form.completed && styles.completedButton]} 
+            <TouchableOpacity
+              style={[styles.completeButton, form.completed && styles.completedButton]}
               onPress={toggleComplete}
             >
-              <Feather 
-                name={form.completed ? "check-circle" : "circle"} 
-                size={24} 
-                color={form.completed ? "#ffffff" : "#6b917f"} 
+              <Feather
+                name={form.completed ? "check-circle" : "circle"}
+                size={24}
+                color={form.completed ? "#ffffff" : "#6b917f"}
               />
               <Text style={[
                 styles.completeButtonText,
@@ -207,7 +225,7 @@ const EditExistingTaskScreen = () => {
               </Text>
             </TouchableOpacity>
 
-            <TouchableOpacity 
+            <TouchableOpacity
               style={styles.deleteButton}
               onPress={handleDelete}
             >
@@ -244,38 +262,44 @@ const EditExistingTaskScreen = () => {
             </View>
           </View>
 
-          <View style={styles.dateTimeBox}>
+          <TouchableOpacity style={styles.dateTimeBox} onPress={showDatepicker}>
             <Text style={styles.labelText}>Date</Text>
+            {(showDateTimePicker && mode=='date') ?
             <DateTimePicker
               mode="date"
               display="default"
               value={form.date}
               onChange={handleDateChange}
               style={styles.dateTimePicker}
-            />
-          </View>
+            /> : <Text>{moment(form.date).format('YYYY-MM-DD')}</Text>
+          }
+          </TouchableOpacity>
 
-          <View style={styles.dateTimeBox}>
+          <TouchableOpacity style={styles.dateTimeBox} onPress={showTimepicker}>
             <Text style={styles.labelText}>Start Time</Text>
+            {showDateTimePicker && mode=='time' ?
             <DateTimePicker
               mode="time"
               display="default"
               value={form.startTime}
               onChange={handleStartTimeChange}
               style={styles.dateTimePicker}
-            />
-          </View>
+              /> : <Text>{moment(form.startTime).format('HH:mm')}</Text>
+            }
+            </TouchableOpacity>
 
           <View style={styles.dateTimeBox}>
             <Text style={styles.labelText}>End Time</Text>
+            {showDateTimePicker && mode=='time' ?
             <DateTimePicker
               mode="time"
               display="default"
               value={form.endTime}
               onChange={handleEndTimeChange}
               style={styles.dateTimePicker}
-            />
-          </View>
+            /> : <Text>{moment(form.endTime).format('HH:mm')}</Text>
+          }
+          </TouchableOpacity>
 
           <View style={styles.repeatContainer}>
             <Text style={styles.repeatLabel}>Repeat Every</Text>
@@ -323,8 +347,8 @@ const EditExistingTaskScreen = () => {
             </View>
           </View>
 
-          <TouchableOpacity 
-            style={styles.submitButton} 
+          <TouchableOpacity
+            style={styles.submitButton}
             onPress={handleSubmit}
           >
             <Text style={styles.submitButtonText}>Save Changes</Text>
@@ -336,12 +360,12 @@ const EditExistingTaskScreen = () => {
 };
 
 const styles = StyleSheet.create({
-  container: { 
-    flex: 1, 
-    backgroundColor: '#caddd7' 
+  container: {
+    flex: 1,
+    backgroundColor: '#caddd7'
   },
-  safeArea: { 
-    flex: 1 
+  safeArea: {
+    flex: 1
   },
   centered: {
     flex: 1,
@@ -354,9 +378,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 20,
   },
-  checkBoxContainer: { 
-    width: '90%', 
-    backgroundColor: 'transparent', 
+  checkBoxContainer: {
+    width: '90%',
+    backgroundColor: 'transparent',
     borderWidth: 0,
     marginBottom: 15,
     padding: 0,
@@ -412,13 +436,13 @@ const styles = StyleSheet.create({
     width: '90%',
     marginBottom: 15,
   },
-  labelText: { 
-    fontSize: 16, 
-    color: '#6b917f', 
-    marginRight: 10 
+  labelText: {
+    fontSize: 16,
+    color: '#6b917f',
+    marginRight: 10
   },
-  dateTimePicker: { 
-    flex: 1 
+  dateTimePicker: {
+    flex: 1
   },
   repeatContainer: {
     backgroundColor: '#fcfcfc',
@@ -427,19 +451,19 @@ const styles = StyleSheet.create({
     padding: 10,
     marginBottom: 10,
   },
-  repeatLabel: { 
-    fontSize: 16, 
-    color: '#6b917f', 
-    marginBottom: 10 
+  repeatLabel: {
+    fontSize: 16,
+    color: '#6b917f',
+    marginBottom: 10
   },
   repeatBox: { 
     flexDirection: 'row', 
     justifyContent: 'space-around', 
     height: 100 
   },
-  switchLabel: { 
-    fontSize: 16, 
-    color: '#6b917f' 
+  switchLabel: {
+    fontSize: 16,
+    color: '#6b917f'
   },
   alertButtonContainer: {
     flexDirection: 'row',
