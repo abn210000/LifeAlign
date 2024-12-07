@@ -22,10 +22,10 @@ interface TaskContextType {
 const TaskContext = createContext<TaskContextType | undefined>(undefined);
 
 // Task provider component
-export const TaskProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const [tasks, setTasks] = useState<Task[]>([]);
-  const [allTasks, setAllTasks] = useState<Task[]>([]);
-  const [selectedDate, setSelectedDate] = useState(moment().format('YYYY-MM-DD'));
+export const TaskProvider: React.FC<{ children: ReactNode, initialTasks: any, initialSelectedDate: any }> = ({ children, initialTasks = [], initialSelectedDate = moment().format('YYYY-MM-DD') }) => {
+  const [tasks, setTasks] = useState<Task[]>(initialTasks);
+  const [allTasks, setAllTasks] = useState<Task[]>(initialTasks);
+  const [selectedDate, setSelectedDate] = useState(initialSelectedDate);
   const [isLoading, setIsLoading] = useState(true);
   const [markedDates, setMarkedDates] = useState<{ [date: string]: { marked: boolean } }>({});
 
