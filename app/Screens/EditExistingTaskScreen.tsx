@@ -288,7 +288,7 @@ const EditExistingTaskScreen = () => {
             }
             </TouchableOpacity>
 
-          <View style={styles.dateTimeBox}>
+            <TouchableOpacity style={styles.dateTimeBox} onPress={showTimepicker}>
             <Text style={styles.labelText}>End Time</Text>
             {showDateTimePicker && mode=='time' ?
             <DateTimePicker
