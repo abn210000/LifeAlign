@@ -36,6 +36,8 @@ const CreateNewTaskScreen = () => {
 
   const [categoryOpen, setCategoryOpen] = useState(false);
   const [categoryItems] = useState(categories);
+  const [mode, setMode] = useState('date');
+  const [showDateTimePicker, setShowDateTimePicker] = useState(false);
 
   const numChoices = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
   const periods = ['-', 'Days', 'Weeks', 'Months', 'Years'];
@@ -115,19 +117,35 @@ const CreateNewTaskScreen = () => {
     }
   };
 
+  const showMode = (currentMode) => {
+    setShowDateTimePicker(true);
+    setMode(currentMode);
+  };
+
+  const showDatepicker = () => {
+    showMode('date');
+  };
+
+  const showTimepicker = () => {
+    showMode('time');
+  };
+
   const handleDateChange = (event: DateTimePickerEvent, selectedDate?: Date) => {
     const currentDate = selectedDate || form.date;
     setForm({ ...form, date: currentDate });
+    setShowDateTimePicker(false);
   };
 
   const handleStartTimeChange = (event: DateTimePickerEvent, selectedTime?: Date) => {
     const currentTime = selectedTime || form.startTime;
     setForm({ ...form, startTime: currentTime });
+    setShowDateTimePicker(false);
   };
 
   const handleEndTimeChange = (event: DateTimePickerEvent, selectedTime?: Date) => {
     const currentTime = selectedTime || form.endTime;
     setForm({ ...form, endTime: currentTime });
+    setShowDateTimePicker(false);
   };
 
   return (
@@ -166,38 +184,44 @@ const CreateNewTaskScreen = () => {
             </View>
           </View>
 
-          <View style={styles.dateTimeBox}>
+          <TouchableOpacity style={styles.dateTimeBox} onPress={showDatepicker}>
             <Text style={styles.labelText}>Date</Text>
+            {(showDateTimePicker && mode=='date') ?
             <DateTimePicker
               mode="date"
               display="default"
               value={form.date}
               onChange={(event, selectedDate) => setForm({ ...form, date: selectedDate || form.date })}
               style={styles.dateTimePicker}
-            />
-          </View>
+            /> : <Text>{moment(form.date).format('YYYY-MM-DD')}</Text>
+          }
+          </TouchableOpacity>
 
-          <View style={styles.dateTimeBox}>
+          <TouchableOpacity style={styles.dateTimeBox} onPress={showTimepicker}>
             <Text style={styles.labelText}>Start Time</Text>
+            {showDateTimePicker && mode=='time' ?
             <DateTimePicker
               mode="time"
               display="default"
               value={form.startTime}
               onChange={handleStartTimeChange}
               style={styles.dateTimePicker}
-            />
-          </View>
+              /> : <Text>{moment(form.startTime).format('HH:mm')}</Text>
+            }
+            </TouchableOpacity>
 
-          <View style={styles.dateTimeBox}>
+            <TouchableOpacity style={styles.dateTimeBox} onPress={showTimepicker}>
             <Text style={styles.labelText}>End Time</Text>
+            {showDateTimePicker && mode=='time' ?
             <DateTimePicker
               mode="time"
               display="default"
               value={form.endTime}
               onChange={handleEndTimeChange}
               style={styles.dateTimePicker}
-            />
-          </View>
+            /> : <Text>{moment(form.endTime).format('HH:mm')}</Text>
+          }
+          </TouchableOpacity>
 
           <View style={styles.repeatContainer}>
             <Text style={styles.repeatLabel}>Repeat Every</Text>
