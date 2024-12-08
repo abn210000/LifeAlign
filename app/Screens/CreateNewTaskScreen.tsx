@@ -126,8 +126,12 @@ const CreateNewTaskScreen = () => {
     showMode('date');
   };
 
-  const showTimepicker = () => {
-    showMode('time');
+  const showStartTimepicker = () => {
+    showMode('startTime');
+  };
+
+  const showEndTimepicker = () => {
+    showMode('endTime');
   };
 
   const handleDateChange = (event: DateTimePickerEvent, selectedDate?: Date) => {
@@ -191,15 +195,14 @@ const CreateNewTaskScreen = () => {
               mode="date"
               display="default"
               value={form.date}
-              onChange={(event, selectedDate) => setForm({ ...form, date: selectedDate || form.date })}
+              onChange={handleDateChange}
               style={styles.dateTimePicker}
-            /> : <Text>{moment(form.date).format('YYYY-MM-DD')}</Text>
-          }
+            /> : <Text>{moment(form.date).format('YYYY-MM-DD')}</Text>}
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.dateTimeBox} onPress={showTimepicker}>
+          <TouchableOpacity style={styles.dateTimeBox} onPress={showStartTimepicker}>
             <Text style={styles.labelText}>Start Time</Text>
-            {showDateTimePicker && mode=='time' ?
+            {showDateTimePicker && mode=='startTime' ?
             <DateTimePicker
               mode="time"
               display="default"
@@ -208,11 +211,11 @@ const CreateNewTaskScreen = () => {
               style={styles.dateTimePicker}
               /> : <Text>{moment(form.startTime).format('HH:mm')}</Text>
             }
-            </TouchableOpacity>
+          </TouchableOpacity>
 
-            <TouchableOpacity style={styles.dateTimeBox} onPress={showTimepicker}>
+          <TouchableOpacity style={styles.dateTimeBox} onPress={showEndTimepicker}>
             <Text style={styles.labelText}>End Time</Text>
-            {showDateTimePicker && mode=='time' ?
+            {showDateTimePicker && mode=='endTime' ?
             <DateTimePicker
               mode="time"
               display="default"
@@ -220,7 +223,7 @@ const CreateNewTaskScreen = () => {
               onChange={handleEndTimeChange}
               style={styles.dateTimePicker}
             /> : <Text>{moment(form.endTime).format('HH:mm')}</Text>
-          }
+            }
           </TouchableOpacity>
 
           <View style={styles.repeatContainer}>

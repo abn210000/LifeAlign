@@ -188,6 +188,7 @@ export default function HomeScreen() {
         <TouchableOpacity 
           style={[styles.button, styles.createButton]} 
           onPress={() => router.push('/Screens/CreateNewTaskScreen')}
+          accessibilityLabel='Create New Task'
         >
           <AntDesign name="plus" size={32} color="#ffffff" />
         </TouchableOpacity>

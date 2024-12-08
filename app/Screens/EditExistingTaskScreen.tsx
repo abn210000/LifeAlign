@@ -53,8 +53,12 @@ const EditExistingTaskScreen = () => {
     showMode('date');
   };
 
-  const showTimepicker = () => {
-    showMode('time');
+  const showStartTimepicker = () => {
+    showMode('startTime');
+  };
+
+  const showEndTimepicker = () => {
+    showMode('endTime');
   };
 
   // Load existing task data
@@ -80,6 +84,7 @@ const EditExistingTaskScreen = () => {
       router.back(); // Optionally navigate back
     }
   }, [taskId, tasks]);
+
   const checkTimeConflict = (startTime: Date, endTime: Date) => {
     return tasks.some(task => {
       if (task.id === form.id) return false; // Skip the current task
@@ -93,7 +98,7 @@ const EditExistingTaskScreen = () => {
       );
     });
   };
-  
+
   const handleSubmit = async () => {
     // Check if end time is before start time
     if (moment(form.endTime).isBefore(moment(form.startTime))) {
@@ -228,6 +233,7 @@ const EditExistingTaskScreen = () => {
             <TouchableOpacity
               style={styles.deleteButton}
               onPress={handleDelete}
+              accessibilityLabel="Delete Task"
             >
               <Feather name="trash-2" size={24} color="#ffffff" />
             </TouchableOpacity>
@@ -275,9 +281,9 @@ const EditExistingTaskScreen = () => {
           }
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.dateTimeBox} onPress={showTimepicker}>
+          <TouchableOpacity style={styles.dateTimeBox} onPress={showStartTimepicker}>
             <Text style={styles.labelText}>Start Time</Text>
-            {showDateTimePicker && mode=='time' ?
+            {showDateTimePicker && mode=='startTime' ?
             <DateTimePicker
               mode="time"
               display="default"
@@ -287,10 +293,10 @@ const EditExistingTaskScreen = () => {
               /> : <Text>{moment(form.startTime).format('HH:mm')}</Text>
             }
             </TouchableOpacity>
-
-            <TouchableOpacity style={styles.dateTimeBox} onPress={showTimepicker}>
+  
+          <TouchableOpacity style={styles.dateTimeBox} onPress={showEndTimepicker}>
             <Text style={styles.labelText}>End Time</Text>
-            {showDateTimePicker && mode=='time' ?
+            {showDateTimePicker && mode=='endTime' ?
             <DateTimePicker
               mode="time"
               display="default"
@@ -298,7 +304,7 @@ const EditExistingTaskScreen = () => {
               onChange={handleEndTimeChange}
               style={styles.dateTimePicker}
             /> : <Text>{moment(form.endTime).format('HH:mm')}</Text>
-          }
+            }
           </TouchableOpacity>
 
           <View style={styles.repeatContainer}>

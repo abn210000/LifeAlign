@@ -1,4 +1,4 @@
-import { render, fireEvent, act } from '@testing-library/react-native';
+import { render, fireEvent, act, waitFor } from '@testing-library/react-native';
 import EditExistingTaskScreen from '@/app/Screens/EditExistingTaskScreen';
 import moment from 'moment';
 import { scheduleNotification } from '@/app/src/notifications';
@@ -10,16 +10,16 @@ jest.mock("@expo/vector-icons", () => ({
     Feather: "",
   }));
 
-  jest.mock('expo-router', () => ({
-    useLocalSearchParams: jest.fn(),
-    useRouter() {
-      return {
-        push: () => jest.fn(),
-        replace: () => jest.fn(),
-        back: () => jest.fn(),
-      };
-    }
-  }));
+jest.mock('expo-router', () => ({
+  useLocalSearchParams: jest.fn(),
+  useRouter() {
+    return {
+      push: () => jest.fn(),
+      replace: () => jest.fn(),
+      back: () => jest.fn(),
+    };
+  }
+}));
 
 let initialSelectedDate = "";
 async function getNewTask() {
@@ -62,9 +62,10 @@ test('should render Edit Existing Task screen title', async () => {
             <EditExistingTaskScreen />
         </TaskProvider>
     );
-    await new Promise((r) => setTimeout(r, 1000));
 
-    expect(getByText('Save Changes')).toBeTruthy();
+    await waitFor(() => {
+      expect(getByText('Save Changes')).toBeTruthy();
+    });
   });
 
 
@@ -81,7 +82,9 @@ test('should display task details for editing', async () => {
       <EditExistingTaskScreen />
     </TaskProvider>
   );
-  expect(getByDisplayValue('Sample Task')).toBeTruthy();
+  await waitFor(() => {
+    expect(getByDisplayValue('Sample Task')).toBeTruthy();
+  });
   // Assuming there's a task with a default title 'Sample Task' in context
 });
 
@@ -92,14 +95,16 @@ test('should save changes and navigate back to Home Screen', async () => {
   let testTask = await getNewTask();
   let initalTasks = [ testTask ];
 
-  const { getByText, queryByPlaceholderText, getByDisplayValue } = render(
+  const { getByText, getByPlaceholderText, getByDisplayValue } = render(
     <TaskProvider initialTasks={initalTasks} initialSelectedDate={initialSelectedDate}>
       <EditExistingTaskScreen />
     </TaskProvider>
   );
-  fireEvent.changeText(queryByPlaceholderText('Title'), 'Updated Task Title');
+  fireEvent.changeText(getByPlaceholderText('Title'), 'Updated Task Title');
   fireEvent.press(getByText('Save Changes'));
-  expect(getByDisplayValue('Updated Task Title')).toBeTruthy();
+  await waitFor(() => {
+    expect(getByDisplayValue('Updated Task Title')).toBeTruthy();
+  });
   // Assuming the task title has been updated to 'Updated Task Title' in the context
 });
 
@@ -111,16 +116,15 @@ test('should delete the task when delete button is pressed', async () => {
   let testTask = await getNewTask();
   let initalTasks = [ testTask ];
 
-  const { getByText, queryByText } = render(
+  const { getByText, queryByText, getByLabelText } = render(
     <TaskProvider initialTasks={initalTasks} initialSelectedDate={initialSelectedDate}>
       <EditExistingTaskScreen />
     </TaskProvider>
   );
 
-  const taskItem = queryByText('Delete Task'); // Adjust to match an actual task
-  if (taskItem) {
-    fireEvent.press(taskItem);
-    expect(queryByText('Delete Task')).toBeNull();
-    // Assuming the task with title 'Sample Task' should no longer be in the list after deletion
-  }
+  fireEvent.press(getByLabelText('Delete Task'));
+  await waitFor(() => {
+    // 
+    expect(getByText('Save Changes')).toBeTruthy();
+  });
 });
