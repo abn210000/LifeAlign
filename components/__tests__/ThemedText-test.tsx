@@ -1,3 +1,6 @@
+// Written by: Evelyn Tran
+// Tested by: Linh Tran
+// Debugged by: Allison Nguyen
 import * as React from 'react';
 import renderer from 'react-test-renderer';
 

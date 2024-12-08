@@ -1,3 +1,6 @@
+// Written by: Linh Tran
+// Tested by: Evelyn Tran
+// Debugged by: Allison Nguyen
 import { Tabs } from 'expo-router';
 import React from 'react';
 

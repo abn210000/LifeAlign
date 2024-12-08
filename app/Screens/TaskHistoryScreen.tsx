@@ -1,3 +1,6 @@
+// Written by: Allison Nguyen
+// Tested by: Linh Tran
+// Debugged by: Evelyn Tran
 import React, { useState } from 'react';
 import {
   View,
@@ -28,6 +31,7 @@ export default function TaskHistoryScreen() {
         : dateA.valueOf() - dateB.valueOf();
     });
 
+  // Function to get the category details
   const getCategoryDetails = (categoryValue: string) => {
     const category = categories.find(cat => cat.value === categoryValue);
     return {
@@ -36,10 +40,12 @@ export default function TaskHistoryScreen() {
     };
   };
 
+  // Function to toggle the sort order
   const toggleSortOrder = () => {
     setSortOrder(prev => prev === 'desc' ? 'asc' : 'desc');
   };
 
+  // Function to render the task item
   const renderTaskItem = ({ item }: { item: Task }) => {
     const categoryDetails = getCategoryDetails(item.category);
     const taskDate = moment(item.date).format('MMM D, YYYY');

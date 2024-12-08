@@ -1,3 +1,6 @@
+// Written by: Linh Tran
+// Tested by: Evelyn Tran
+// Debugged by: Allison Nguyen
 import { useState, useEffect, useRef } from 'react';
 import { Platform } from 'react-native';
 import * as Device from 'expo-device';
@@ -28,13 +31,17 @@ export async function registerForPushNotificationsAsync() {
         });
     }
 
+    // Check if the device is a physical device
     if (Device.isDevice) {
+        // Get the existing notification permissions
         const { status: existingStatus } = await Notifications.getPermissionsAsync();
         let finalStatus = existingStatus;
+        // Request notification permissions if not already granted
         if (existingStatus !== 'granted') {
             const { status } = await Notifications.requestPermissionsAsync();
             finalStatus = status;
         }
+        // Alert if notification permissions are not granted
         if (finalStatus !== 'granted') {
             alert('Failed to get push token for push notification!');
             return;

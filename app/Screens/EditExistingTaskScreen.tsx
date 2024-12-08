@@ -27,6 +27,7 @@ const EditExistingTaskScreen = () => {
   const { taskId } = useLocalSearchParams();
   const { updateTask, deleteTask, tasks } = useTaskContext();
 
+  // Form state to store all task details
   const [form, setForm] = useState({
     id: '',
     title: '',
@@ -41,10 +42,12 @@ const EditExistingTaskScreen = () => {
     notifId: ['']
   });
 
+  // State for UI controls
   const [mode, setMode] = useState('date');
   const [showDateTimePicker, setShowDateTimePicker] = useState(false);
   
-  const showMode = (currentMode) => {
+  // Function to show the date/time picker
+  const showMode = (currentMode: 'date' | 'startTime' | 'endTime') => {
     setShowDateTimePicker(true);
     setMode(currentMode);
   };
@@ -85,6 +88,7 @@ const EditExistingTaskScreen = () => {
     }
   }, [taskId, tasks]);
 
+  // Function to check if there is a time conflict with existing tasks
   const checkTimeConflict = (startTime: Date, endTime: Date) => {
     return tasks.some(task => {
       if (task.id === form.id) return false; // Skip the current task
@@ -99,6 +103,7 @@ const EditExistingTaskScreen = () => {
     });
   };
 
+  // Function to handle the form submission
   const handleSubmit = async () => {
     // Check if end time is before start time
     if (moment(form.endTime).isBefore(moment(form.startTime))) {
@@ -110,6 +115,7 @@ const EditExistingTaskScreen = () => {
         return;
     }
 
+    // Check if there is a time conflict with existing tasks
     const hasConflict = checkTimeConflict(form.startTime, form.endTime);
 
     if (hasConflict) {
@@ -141,6 +147,7 @@ const EditExistingTaskScreen = () => {
         form.alertType
       );
 
+      // Update the task details
       const updatedTask = {
         title: form.title,
         category: form.category,
@@ -162,6 +169,7 @@ const EditExistingTaskScreen = () => {
     }
   };
 
+  // Function to handle the deletion of the task
   const handleDelete = async () => {
     try {
       if (form.notifId) {
@@ -174,6 +182,7 @@ const EditExistingTaskScreen = () => {
     }
   };
 
+  // Function to toggle the completion status of the task
   const toggleComplete = async () => {
     try {
       const updatedTask = {
@@ -187,18 +196,21 @@ const EditExistingTaskScreen = () => {
     }
   };
 
+  // Function to handle the date change
   const handleDateChange = (event: DateTimePickerEvent, selectedDate?: Date) => {
     const currentDate = selectedDate || form.date;
     setForm({ ...form, date: currentDate });
     setShowDateTimePicker(false);
   };
 
+  // Function to handle the start time change
   const handleStartTimeChange = (event: DateTimePickerEvent, selectedTime?: Date) => {
     const currentTime = selectedTime || form.startTime;
     setForm({ ...form, startTime: currentTime });
     setShowDateTimePicker(false);
   };
 
+  // Function to handle the end time change
   const handleEndTimeChange = (event: DateTimePickerEvent, selectedTime?: Date) => {
     const currentTime = selectedTime || form.endTime;
     setForm({ ...form, endTime: currentTime });

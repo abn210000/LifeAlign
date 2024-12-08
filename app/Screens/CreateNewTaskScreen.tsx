@@ -1,3 +1,6 @@
+// Written by: Linh Tran
+// Tested by: Allison Nguyen
+// Debugged by: Evelyn Tran
 import React, { useState } from 'react';
 import {
   StyleSheet,
@@ -23,6 +26,7 @@ import { scheduleNotification } from '../src/notifications';
 const CreateNewTaskScreen = () => {
   const router = useRouter();
 
+  // Form state to store all task details
   const [form, setForm] = useState({
     title: '',
     category: '',
@@ -34,11 +38,13 @@ const CreateNewTaskScreen = () => {
     repeatPeriod: ''
   });
 
+  // State for UI controls
   const [categoryOpen, setCategoryOpen] = useState(false);
   const [categoryItems] = useState(categories);
   const [mode, setMode] = useState('date');
   const [showDateTimePicker, setShowDateTimePicker] = useState(false);
 
+  // Options for repeat functionality
   const numChoices = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
   const periods = ['-', 'Days', 'Weeks', 'Months', 'Years'];
 
@@ -57,6 +63,7 @@ const CreateNewTaskScreen = () => {
     });
   };
 
+  // Handles the form submission
   const handleSubmit = async () => {
     // Check if end time is before start time
     if (moment(form.endTime).isBefore(moment(form.startTime))) {
@@ -68,6 +75,7 @@ const CreateNewTaskScreen = () => {
         return;
     }
 
+    // Check if there is a time conflict with existing tasks
     const hasConflict = checkTimeConflict(form.startTime, form.endTime);
 
     if (hasConflict) {
@@ -84,6 +92,7 @@ const CreateNewTaskScreen = () => {
     }
   };
 
+  // Schedules notifications and creates the new task
   const scheduleTask = async () => {
     try {
       // Schedule notifications and get notification ids
@@ -117,7 +126,8 @@ const CreateNewTaskScreen = () => {
     }
   };
 
-  const showMode = (currentMode) => {
+  // Date/Time picker control functions
+  const showMode = (currentMode: 'date' | 'startTime' | 'endTime') => {
     setShowDateTimePicker(true);
     setMode(currentMode);
   };
@@ -134,18 +144,21 @@ const CreateNewTaskScreen = () => {
     showMode('endTime');
   };
 
+  // Handles the date change
   const handleDateChange = (event: DateTimePickerEvent, selectedDate?: Date) => {
     const currentDate = selectedDate || form.date;
     setForm({ ...form, date: currentDate });
     setShowDateTimePicker(false);
   };
 
+  // Handles the start time change
   const handleStartTimeChange = (event: DateTimePickerEvent, selectedTime?: Date) => {
     const currentTime = selectedTime || form.startTime;
     setForm({ ...form, startTime: currentTime });
     setShowDateTimePicker(false);
   };
-
+  
+  // Handles the end time change
   const handleEndTimeChange = (event: DateTimePickerEvent, selectedTime?: Date) => {
     const currentTime = selectedTime || form.endTime;
     setForm({ ...form, endTime: currentTime });

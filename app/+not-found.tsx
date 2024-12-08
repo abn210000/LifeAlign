@@ -1,3 +1,6 @@
+// Written by: Linh Tran
+// Tested by: Evelyn Tran
+// Debugged by: Allison Nguyen
 import React from 'react';
 import { View, Text } from 'react-native';
 

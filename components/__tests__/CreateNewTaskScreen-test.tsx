@@ -1,3 +1,6 @@
+// Written by: Evelyn Tran
+// Tested by: Linh Tran
+// Debugged by: Allison Nguyen
 import React from 'react';
 import { render, fireEvent, waitFor } from '@testing-library/react-native';
 import CreateNewTaskScreen from '@/app/Screens/CreateNewTaskScreen';

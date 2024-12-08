@@ -1,3 +1,6 @@
+// Written by: Allison Nguyen
+// Tested by: Evelyn Tran
+// Debugged by: Linh Tran
 export const categories = [
   { label: 'Home', value: 'household', color: '#ee6b6e' },
   { label: 'Car', value: 'car', color: '#F9E076' },

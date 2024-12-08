@@ -1,3 +1,7 @@
+// Written by: Allison Nguyen
+// Tested by: Linh Tran
+// Debugged by: Evelyn Tran
+
 import React from 'react';
 import { View, Text, StyleSheet, FlatList, TouchableOpacity } from 'react-native';
 import { useRouter } from 'expo-router';
@@ -10,6 +14,7 @@ export default function EditTaskList() {
   const router = useRouter();
   const { tasks } = useTaskContext();
 
+  // Function to get the category details
   const getCategoryDetails = (categoryValue: string) => {
     const category = categories.find(cat => cat.value === categoryValue);
     return {
@@ -18,10 +23,12 @@ export default function EditTaskList() {
     };
   };
 
+  // Function to format the date
   const formatDate = (dateString: string) => {
     return moment(dateString).format('MMM D, YYYY');
   };
 
+  // Function to render the task item
   const renderTaskItem = ({ item }: { item: Task }) => {
     const categoryDetails = getCategoryDetails(item.category);
     const formattedStartTime = moment(item.startTime, 'HH:mm').format('h:mm A');

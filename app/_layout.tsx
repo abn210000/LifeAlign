@@ -1,3 +1,6 @@
+// Written by: Linh Tran
+// Tested by: Evelyn Tran
+// Debugged by: Allison Nguyen
 import React, { useEffect } from 'react';
 import { TaskProvider } from './src/context/TaskContext'; 
 import { Stack } from 'expo-router';

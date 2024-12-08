@@ -1,3 +1,6 @@
+// Written by: Linh Tran
+// Tested by: Evelyn Tran
+// Debugged by: Allison Nguyen
 import { ScrollViewStyleReset } from 'expo-router/html';
 import { type PropsWithChildren } from 'react';
 

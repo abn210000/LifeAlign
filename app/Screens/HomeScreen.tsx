@@ -1,4 +1,6 @@
-// HomeScreen.tsx
+// Written by: Allison Nguyen
+// Tested by: Linh Tran
+// Debugged by: Evelyn Tran
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, FlatList, ActivityIndicator } from 'react-native';
 import { Calendar } from 'react-native-calendars';
@@ -44,6 +46,7 @@ export default function HomeScreen() {
     };
   };
 
+  // Function to push the task to tomorrow
   const handlePushToTomorrow = async (task: Task) => {
     const tomorrow = moment(task.date).add(1, 'day').format('YYYY-MM-DD');
     try {
